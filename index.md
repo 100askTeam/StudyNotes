@@ -1,7 +1,8 @@
 **优秀学员-嵌入式开发学习笔记汇总**
 - [黎宇恒同学笔记](hometownm/README.md)
   - 黎宇恒同学 所有笔记均存放在 `hometownm`文件夹下。
-## 笔记列表
+----
+# 黎宇恒学习笔记列表
 - Linux-Studynotes
   - 01_驱动学习
     - imx6ull
@@ -24,7 +25,6 @@
     - [视频监控重要章节记录.md](hometownm/Linux-Studynotes/02_应用学习/视频监控重要章节记录.md)
     - [视频监控项目.md](hometownm/Linux-Studynotes/02_应用学习/视频监控项目.md)
     - [量产工具文档.md](hometownm/Linux-Studynotes/02_应用学习/量产工具文档.md)
-
 - RTOS-Studynotes
   - [01_4小时中度掌握FreeRTOS.md](hometownm/RTOS-Studynotes/01_4小时中度掌握FreeRTOS.md)
   - [02_RTT直播_2021_12_11.pptx](hometownm/RTOS-Studynotes/02_RTT直播_2021_12_11.pptx)
