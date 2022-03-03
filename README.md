@@ -1,6 +1,5 @@
 **优秀学员-嵌入式开发学习笔记汇总**
-- [黎宇恒同学笔记](hometownm/README.md)
-  - 黎宇恒同学所有笔记均存放在 `hometownm`文件夹下。
+- [黎宇恒同学](hometownm/README.md)：所有笔记均存放在 `hometownm`文件夹下。
 ----
 
 # 黎宇恒学习笔记列表
