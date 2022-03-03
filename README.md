@@ -2,25 +2,36 @@
 
 - [黎宇恒同学](#黎宇恒)
 ----
+
 # 黎宇恒
+
 - 黎宇恒同学 所有笔记均存放在 `hometownm`文件夹下。
+
+
 ## 笔记列表
+
 - Linux-Studynotes
   - 01_驱动学习
     - imx6ull
       - [100ask_imx6ull_pro环境配置.md](hometownm/Linux-Studynotes/01_驱动学习/imx6ull/100ask_imx6ull_pro环境配置.md)
       - [Linux内核启动流程.md](hometownm/Linux-Studynotes/01_驱动学习/imx6ull/Linux内核启动流程.md)
+
+
     - 全志Linux芯片
       - 荔枝派Nano
         - [荔枝派Nano.md](hometownm/Linux-Studynotes/01_驱动学习/全志Linux芯片/荔枝派Nano/荔枝派Nano.md)
       - 荔枝派Zero
         - [荔枝派zero.md](hometownm/Linux-Studynotes/01_驱动学习/全志Linux芯片/荔枝派Zero/荔枝派zero.md) 
+
+
     - 驱动大全
       - [03_LCD.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/03_LCD.md)
       - [04_IIC.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/04_IIC.md)
       - [05_Input.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/05_Input.md)
       - [06_Pinctrl.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/06_Pinctrl.md)
       - [08_Interrupt.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/08_Interrupt.md)
+
+
     - 流程图
       - ![01_互ping示意图.drawio.png](http://studynotes.100ask.net/hometownm/Linux-Studynotes/01_驱动学习/流程图/01_互ping示意图.drawio.png) 
       - ![02_EMMC与boot目录内容的关系.drawio.png](http://studynotes.100ask.net/hometownm/Linux-Studynotes/01_驱动学习/流程图/02_EMMC与boot目录内容的关系.drawio.png)
@@ -48,3 +59,5 @@
     - ![01_Hal库智能家居——输入系统.drawio.png](http://studynotes.100ask.net/hometownm/RTOS-Studynotes/程序框架图/01_Hal库智能家居——输入系统.drawio.png)
     - ![02_Hal库智能家居——LED设备.drawio.png](http://studynotes.100ask.net/hometownm/RTOS-Studynotes/程序框架图/02_Hal库智能家居——LED设备.drawio.png)
     - ![03_Hal库智能家居——OLED设备.drawio.png](http://studynotes.100ask.net/hometownm/RTOS-Studynotes/程序框架图/03_Hal库智能家居——OLED设备.drawio.png)
+
+
