@@ -16,9 +16,9 @@
       - 荔枝派Zero
         - [荔枝派zero.md](hometownm/Linux-Studynotes/01_驱动学习/全志Linux芯片/荔枝派Zero/荔枝派zero.md)
     - 流程图
-      - ![01_互ping示意图.drawio.png](https://raw.githubusercontent.com/100askTeam/StudyNotes/main/hometownm/Linux-Studynotes/01_驱动学习/流程图/01_互ping示意图.drawio.png) 
-      - ![02_EMMC与boot目录内容的关系.drawio.png](https://raw.githubusercontent.com/100askTeam/StudyNotes/main/hometownm/Linux-Studynotes/01_驱动学习/流程图/02_EMMC与boot目录内容的关系.drawio.png)
-      - ![03_platform_device设备模型.drawio.png](https://raw.githubusercontent.com/100askTeam/StudyNotes/main/hometownm/Linux-Studynotes/01_驱动学习/流程图/03_platform_device设备模型.drawio.png)
+      - ![01_互ping示意图.drawio.png](http://studynotes.100ask.net/hometownm/Linux-Studynotes/01_驱动学习/流程图/01_互ping示意图.drawio.png) 
+      - ![02_EMMC与boot目录内容的关系.drawio.png](http://studynotes.100ask.net/hometownm/Linux-Studynotes/01_驱动学习/流程图/02_EMMC与boot目录内容的关系.drawio.png)
+      - ![03_platform_device设备模型.drawio.png](http://studynotes.100ask.net/hometownm/Linux-Studynotes/01_驱动学习/流程图/03_platform_device设备模型.drawio.png)
       - ![04_I2C系统.drawio.png](http://studynotes.100ask.net/hometownm/Linux-Studynotes/01_驱动学习/流程图/04_I2C系统.drawio.png)
       - ![05_SPI编程思路.drawio.png](http://studynotes.100ask.net/hometownm/Linux-Studynotes/01_驱动学习/流程图/05_SPI编程思路.drawio.png)
       - ![06_imx6ull外部资源.drawio.png](http://studynotes.100ask.net/hometownm/Linux-Studynotes/01_驱动学习/流程图/06_imx6ull外部资源.drawio.png)
