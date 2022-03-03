@@ -23,7 +23,7 @@ Linux内核文档:
 
   那么对于上层来说，i2c-core.c这一层提供的smbus和标准的iic收发函数，其实里面是需要传入 i2c_adapter的，所以这种实现方法和底层使用的模拟或者硬件实现是分割开的
 
-![image-20220113114506849](04 IIC.assets/image-20220113114506849.png)
+![image-20220113114506849](04_IIC.assets/image-20220113114506849.png)
 
 
 
@@ -180,7 +180,7 @@ struct i2c_client {
 
 
 
-![image-20220108141608819](04 IIC.assets/image-20220108141608819.png)
+![image-20220108141608819](04_IIC.assets/image-20220108141608819.png)
 
 
 
@@ -225,7 +225,7 @@ int (*master_xfer)(struct i2c_adapter *adap, struct i2c_msg *msgs, int num);
 
 
 
-![image-20220108142744371](04 IIC.assets/image-20220108142744371.png)
+![image-20220108142744371](04_IIC.assets/image-20220108142744371.png)
 
 
 
@@ -233,7 +233,7 @@ int (*master_xfer)(struct i2c_adapter *adap, struct i2c_msg *msgs, int num);
 
 
 
-![image-20220108143237076](04 IIC.assets/image-20220108143237076.png)
+![image-20220108143237076](04_IIC.assets/image-20220108143237076.png)
 
 
 
@@ -318,7 +318,7 @@ int (*master_xfer)(struct i2c_adapter *adap, struct i2c_msg *msgs, int num);
 - 第一次是 `i2c_msg` 中 `flags` 标记为写，消息中存放要读取的 EEPROM 的内存地址
 - 第二次是 `i2c_msg` 中 `flags` 标记为读，读取返回来的数据
 
-![image-20220108143625232](../../../../AppData/Roaming/Typora/typora-user-images/image-20220108143625232.png)
+![image-20220108143625232](04_IIC.assets/image-20220108143625232.png)
 
 
 
@@ -356,7 +356,7 @@ msgs[1].buf    = &data;
 
 ### 2.1 APP 访问 I2C 总线上的设备过程分析
 
-![image-20220108144819751](04 IIC.assets/image-20220108144819751.png)
+![image-20220108144819751](04_IIC.assets/image-20220108144819751.png)
 
 
 
@@ -364,11 +364,11 @@ msgs[1].buf    = &data;
 
 
 
-![image-20220108192848191](04 IIC.assets/image-20220108192848191.png)
+![image-20220108192848191](04_IIC.assets/image-20220108192848191.png)
 
 
 
-![image-20220108215419473](04 IIC.assets/image-20220108215419473.png)
+![image-20220108215419473](04_IIC.assets/image-20220108215419473.png)
 
 #### 
 
@@ -380,9 +380,9 @@ msgs[1].buf    = &data;
 
 
 
-![image-20220109211951096](04 IIC.assets/image-20220109211951096.png)
+![image-20220109211951096](04_IIC.assets/image-20220109211951096.png)
 
-![image-20220109214042135](04 IIC.assets/image-20220109214042135.png)
+![image-20220109214042135](04_IIC.assets/image-20220109214042135.png)
 
 
 
@@ -406,7 +406,7 @@ SMBus也被用来连接各种设备，包括电源相关设备，系统传感器
 SMBus 为系统和电源管理这样的任务提供了一条控制总线，使用 SMBus 的系统，设备之间发送和接收消息都是通过 SMBus，而不是使用单独的控制线，这样可以节省设备的管脚数。
 SMBus是基于I2C协议的，SMBus要求更严格，SMBus是I2C协议的子集。
 
-![image-20210224093827621](04 IIC.assets/017_i2c_and_smbus.png)
+![image-20210224093827621](04_IIC.assets/017_i2c_and_smbus.png)
 
 SMBus有哪些更严格的要求？跟一般的I2C协议有哪些差别？
 
@@ -443,13 +443,13 @@ SMBus有哪些更严格的要求？跟一般的I2C协议有哪些差别？
   * **在写、读之间，可以不发出P信号**，而是直接发出S信号：这个S信号就是`REPEATED START`
 
   * 如下图所示
-    ![image-20210224100056055](04 IIC.assets/018_repeated_start.png)
+    ![image-20210224100056055](04_IIC.assets/018_repeated_start.png)
 
     
 
     
 
-    ![image-20220102221243937](04 IIC.assets/image-20220102221243937.png)
+    ![image-20220102221243937](04_IIC.assets/image-20220102221243937.png)
 
 * SMBus Low Power Version 
 
@@ -504,7 +504,7 @@ Count (8 bits): A data byte containing the length of a block operation.
 
 #### 3.2.2 SMBus Quick Command
 
-![image-20210224105224903](04 IIC.assets/019_smbus_quick_command.png)
+![image-20210224105224903](04_IIC.assets/019_smbus_quick_command.png)
 
 只是用来发送一位数据：R/W#本意是用来表示读或写，但是在SMBus里可以用来表示其他含义。
 比如某些开关设备，可以根据这一位来决定是打开还是关闭。（**开关设备**）
@@ -517,7 +517,7 @@ Functionality flag: I2C_FUNC_SMBUS_QUICK
 
 #### 3.2.3 SMBus Receive Byte
 
-![image-20210224113511225](04 IIC.assets/020_smbus_receive_byte.png)
+![image-20210224113511225](04_IIC.assets/020_smbus_receive_byte.png)
 
 I2C-tools中的函数：i2c_smbus_read_byte()。
 读取一个字节，Host adapter接收到一个字节后不需要发出回应信号(上图中N表示不回应)。
@@ -530,7 +530,7 @@ Functionality flag: I2C_FUNC_SMBUS_READ_BYTE
 
 #### 3.2.4 SMBus Send Byte
 
-![image-20210224110638143](04 IIC.assets/021_smbus_send_byte.png)
+![image-20210224110638143](04_IIC.assets/021_smbus_send_byte.png)
 
 I2C-tools中的函数：i2c_smbus_write_byte()。
 发送一个字节。
@@ -543,7 +543,7 @@ Functionality flag: I2C_FUNC_SMBUS_WRITE_BYTE
 
 #### 3.2.5 SMBus Read Byte
 
-![image-20210224110812872](04 IIC.assets/022_smbus_read_byte.png)
+![image-20210224110812872](04_IIC.assets/022_smbus_read_byte.png)
 
 I2C-tools中的函数：i2c_smbus_read_byte_data()。
 
@@ -558,7 +558,7 @@ Functionality flag: I2C_FUNC_SMBUS_READ_BYTE_DATA
 
 #### 3.2.6 SMBus Read Word
 
-![image-20210224111404096](04 IIC.assets/023_smbus_read_word.png)
+![image-20210224111404096](04_IIC.assets/023_smbus_read_word.png)
 
 I2C-tools中的函数：i2c_smbus_read_word_data()。
 
@@ -572,7 +572,7 @@ Functionality flag: I2C_FUNC_SMBUS_READ_WORD_DATA
 
 #### 3.2.7 SMBus Write Byte
 
-![image-20210224111542576](04 IIC.assets/024_smbus_write_byte.png)
+![image-20210224111542576](04_IIC.assets/024_smbus_write_byte.png)
 
 I2C-tools中的函数：i2c_smbus_write_byte_data()。
 
@@ -586,7 +586,7 @@ Functionality flag: I2C_FUNC_SMBUS_WRITE_BYTE_DATA
 
 #### 3.2.8 SMBus Write Word
 
-![image-20210224111840257](04 IIC.assets/025_smbus_write_word.png)
+![image-20210224111840257](04_IIC.assets/025_smbus_write_word.png)
 
 I2C-tools中的函数：i2c_smbus_write_word_data()。
 
@@ -600,7 +600,7 @@ Functionality flag: I2C_FUNC_SMBUS_WRITE_WORD_DATA
 
 #### 3.2.9 SMBus Block Read
 
-![image-20210224112524185](04 IIC.assets/026_smbus_block_read.png)
+![image-20210224112524185](04_IIC.assets/026_smbus_block_read.png)
 
 I2C-tools中的函数：i2c_smbus_read_block_data()。
 
@@ -617,7 +617,7 @@ Functionality flag: I2C_FUNC_SMBUS_READ_BLOCK_DATA
 
 #### 3.2.10 SMBus Block Write
 
-![image-20210224112629201](04 IIC.assets/027_smbus_block_write.png)
+![image-20210224112629201](04_IIC.assets/027_smbus_block_write.png)
 
 I2C-tools中的函数：i2c_smbus_write_block_data()。
 
@@ -634,7 +634,7 @@ Functionality flag: I2C_FUNC_SMBUS_WRITE_BLOCK_DATA
 在一般的I2C协议中，也可以连续读出多个字节。
 它跟`SMBus Block Read`的差别在于设备发出的第1个数据不是长度N，如下图所示：
 
-![image-20210225094024082](04 IIC.assets/033_i2c_block_read.png)
+![image-20210225094024082](04_IIC.assets/033_i2c_block_read.png)
 
 I2C-tools中的函数：i2c_smbus_read_i2c_block_data()。
 
@@ -651,7 +651,7 @@ Functionality flag: I2C_FUNC_SMBUS_READ_I2C_BLOCK
 在一般的I2C协议中，也可以连续发出多个字节。
 它跟`SMBus Block Write`的差别在于发出的第1个数据不是长度N，如下图所示：
 
-![image-20210225094359443](04 IIC.assets/034_i2c_block_write.png)
+![image-20210225094359443](04_IIC.assets/034_i2c_block_write.png)
 
 I2C-tools中的函数：i2c_smbus_write_i2c_block_data()。
 
@@ -665,7 +665,7 @@ Functionality flag: I2C_FUNC_SMBUS_WRITE_I2C_BLOCK
 
 #### 3.2.13 SMBus Block Write - Block Read Process Call
 
-![image-20210224112940865](04 IIC.assets/028_smbus_block_write_block_read_process_call.png)先写一块数据，再读一块数据。
+![image-20210224112940865](04_IIC.assets/028_smbus_block_write_block_read_process_call.png)先写一块数据，再读一块数据。
 
 ```shell
 Functionality flag: I2C_FUNC_SMBUS_BLOCK_PROC_CALL
@@ -679,7 +679,7 @@ PEC是一种错误校验码，如果使用PEC，那么在P信号之前，数据�
 
 以`SMBus Send Byte`为例，下图中，一个未使用PEC，另一个使用PEC：
 
-![image-20210224113416249](04 IIC.assets/029_smbus_pec_example.png)
+![image-20210224113416249](04_IIC.assets/029_smbus_pec_example.png)
 
 
 
@@ -699,7 +699,7 @@ PEC是一种错误校验码，如果使用PEC，那么在P信号之前，数据�
 
 
 
-![image-20220109220438494](04 IIC.assets/image-20220109220438494.png)
+![image-20220109220438494](04_IIC.assets/image-20220109220438494.png)
 
 
 
@@ -711,7 +711,7 @@ PEC是一种错误校验码，如果使用PEC，那么在P信号之前，数据�
 
 
 
-![image-20220110095147159](04 IIC.assets/image-20220110095147159.png)
+![image-20220110095147159](04_IIC.assets/image-20220110095147159.png)
 
 
 
@@ -729,11 +729,11 @@ PEC是一种错误校验码，如果使用PEC，那么在P信号之前，数据�
 - 之所以  i2c-dev.c 只能提供给APP应用程序来使用，是因为  i2c-dev.c  中已经写好了接口，就是给应用程序来调用的，所以在驱动程序中就不再设计一层来使用  i2c-dev.c  来操作硬件了。 i2c-tools 这个工具也是通过调用  i2c-dev.c 中提供的接口函数来实现的。
 - 而我们在第5章中实现的 APP，就模仿  i2c-tools 的函数来实现的。
 
-![image-20220109200015218](04 IIC.assets/image-20220109200015218.png)
+![image-20220109200015218](04_IIC.assets/image-20220109200015218.png)
 
 - 真正底层的，应该是调用 i2c.h 和 i2c-core.c 中的底层函数来实现的 i2c 设备驱动
 
-![image-20220109200855208](04 IIC.assets/image-20220109200855208.png)
+![image-20220109200855208](04_IIC.assets/image-20220109200855208.png)
 
 ### 8.1 分析 i2c-dev.c 
 
@@ -751,13 +751,13 @@ PEC是一种错误校验码，如果使用PEC，那么在P信号之前，数据�
 
  #### 8.2.1 register_chrdev的内部实现
 
-  ![image-20210226163844390](04 IIC.assets/046_register_chrdev_internal.png)
+  ![image-20210226163844390](04_IIC.assets/046_register_chrdev_internal.png)
 
 
 
 #### 8.2.2 i2c-dev驱动的注册过程
 
-![image-20210226164128588](04 IIC.assets/047_i2c-dev_register.png)
+![image-20210226164128588](04_IIC.assets/047_i2c-dev_register.png)
 
 
 
@@ -779,7 +779,7 @@ static const struct file_operations i2cdev_fops = {
 ```
 
 主要的系统调用：open, ioctl：
-![image-20210226165250492](04 IIC.assets/048_i2c-dev_interface.png)
+![image-20210226165250492](04_IIC.assets/048_i2c-dev_interface.png)
 
 
 
@@ -787,29 +787,29 @@ static const struct file_operations i2cdev_fops = {
 
 #### 8.3.1 i2cdev_open
 
-![image-20210226170350844](04 IIC.assets/049_i2cdev_open.png)
+![image-20210226170350844](04_IIC.assets/049_i2cdev_open.png)
 
 
 
 #### 8.3.2 i2cdev_ioctl: I2C_SLAVE/I2C_SLAVE_FORCE
 
-![image-20210226172800990](04 IIC.assets/050_ioctl_I2C_SLAVE_FORCE.png)
+![image-20210226172800990](04_IIC.assets/050_ioctl_I2C_SLAVE_FORCE.png)
 
 
 
 #### 8.3.3 i2cdev_ioctl: I2C_RDWR
 
-![image-20210226173625871](04 IIC.assets/051_ioctl_I2C_RDWR.png)
+![image-20210226173625871](04_IIC.assets/051_ioctl_I2C_RDWR.png)
 
 #### 8.3.4 i2cdev_ioctl: I2C_SMBUS
 
-![image-20210226173952800](04 IIC.assets/052_ioctl_I2C_SMBUS.png)
+![image-20210226173952800](04_IIC.assets/052_ioctl_I2C_SMBUS.png)
 
 
 
 #### 8.3.5 总结
 
-![image-20210226175142066](04 IIC.assets/053_app_to_i2c_driver.png)
+![image-20210226175142066](04_IIC.assets/053_app_to_i2c_driver.png)
 
 
 
@@ -920,17 +920,17 @@ int register_chrdev_region(dev_t from, unsigned count, const char *name);　　
 
 查看i2c系统的主设备号
 
-![image-20220110121214417](04 IIC.assets/image-20220110121214417.png)
+![image-20220110121214417](04_IIC.assets/image-20220110121214417.png)
 
 查看类中有没有注册了设备
 
-![image-20220110121440215](04 IIC.assets/image-20220110121440215.png)
+![image-20220110121440215](04_IIC.assets/image-20220110121440215.png)
 
-![image-20220110121423163](04 IIC.assets/image-20220110121423163.png)
+![image-20220110121423163](04_IIC.assets/image-20220110121423163.png)
 
 查看设备节点
 
-![image-20220110132805067](04 IIC.assets/image-20220110132805067.png)
+![image-20220110132805067](04_IIC.assets/image-20220110132805067.png)
 
 
 
@@ -999,7 +999,7 @@ while ((dev = next_device(&i)) && !error)
 
 新型的字符设备驱动
 
-![image-20220110142818505](04 IIC.assets/image-20220110142818505.png)
+![image-20220110142818505](04_IIC.assets/image-20220110142818505.png)
 
 优点：
 
@@ -1008,7 +1008,7 @@ while ((dev = next_device(&i)) && !error)
 
 网上的例子：
 
-![img](04 IIC.assets/2018110214441853.png)
+![img](04_IIC.assets/2018110214441853.png)
 
 
 
@@ -1055,7 +1055,7 @@ static int i2cdev_open(struct inode *inode, struct file *file)
 
 APP应用程序，应该是 open 其中一个设备节点，然后从中提取出次设备号，虽然这个 89 的主设备号下面的所有次设备号都是共用的一套 fops，但是通过次设备号可以划分操作不同的功能。
 
-![image-20220110152907762](04 IIC.assets/image-20220110152907762.png)
+![image-20220110152907762](04_IIC.assets/image-20220110152907762.png)
 
 
 
@@ -2033,7 +2033,7 @@ I2C-Tools可以通过SMBus来访问I2C设备，也可以使用一般的I2C协议
 2. 要和哪一个从设备通信：使用 ioctl 指定从机地址
 3. 要发送什么数据：构造好 i2c_msg 数据包，使用 ioctl 将数据包发送出去
 
-![image-20210224191404322](04 IIC.assets/031_i2ctransfer_flow.png)
+![image-20210224191404322](04_IIC.assets/031_i2ctransfer_flow.png)
 
 
 
@@ -2055,7 +2055,7 @@ I2C-Tools可以通过SMBus来访问I2C设备，也可以使用一般的I2C协议
 
    
 
-![image-20210224192345075](04 IIC.assets/032_i2cget_i2cset_flow.png)
+![image-20210224192345075](04_IIC.assets/032_i2cget_i2cset_flow.png)
 
 
 
@@ -2074,7 +2074,7 @@ i2cdetect -l
 
 imx6ull 有2个I2C控制器。
 
-![image-20220109102032484](04 IIC.assets/image-20220109102032484.png)
+![image-20220109102032484](04_IIC.assets/image-20220109102032484.png)
 
 
 
@@ -2087,7 +2087,7 @@ i2cdetect -F I2CBUS
 
 支持普通 I2C发送接收函数，也支持 SMBus 的特殊发送接收函数。
 
-![image-20220109102209824](04 IIC.assets/image-20220109102209824.png)
+![image-20220109102209824](04_IIC.assets/image-20220109102209824.png)
 
 
 
@@ -2102,7 +2102,7 @@ UU的代表该地址有I2C设备，并且内核中已经有对应的驱动程序
 
 其他数字代表该地址有I2C设备，但是内核中还没有驱动程序。
 
-![image-20220109105052431](04 IIC.assets/image-20220109105052431.png)
+![image-20220109105052431](04_IIC.assets/image-20220109105052431.png)
 
 
 
@@ -2205,11 +2205,11 @@ Usage: i2cset [-f] [-y] [-m MASK] [-r] [-a] I2CBUS CHIP-ADDRESS DATA-ADDRESS [VA
 
 不带参数 -y ，就会每次都提示你是否 Continue，所以可以加上 -y 选项
 
-![image-20220109104518541](04 IIC.assets/image-20220109104518541.png)
+![image-20220109104518541](04_IIC.assets/image-20220109104518541.png)
 
 添加参数 -y
 
-![image-20220109105216119](04 IIC.assets/image-20220109105216119.png)
+![image-20220109105216119](04_IIC.assets/image-20220109105216119.png)
 
 
 
@@ -2252,7 +2252,7 @@ Example (same EEPROM, at offset 0x42 write 0xff 0xfe ... 0xf0):
 
 ### 12.2 AP3216C 传感器
 
-![image-20220108215850605](04 IIC.assets/image-20220108215850605.png)
+![image-20220108215850605](04_IIC.assets/image-20220108215850605.png)
 
 对于 AP3216C 设备，有2中方式进行通信访问：
 
@@ -2280,13 +2280,13 @@ i2ctransfer -f -y 0 w1@0x1e 0xe r2
 
 如果我们不想打开原理图来确定有哪些 I2C 设备的话，我们可以使用 `I2C-Tools` 来发送命令监测有哪些设备：
 
-![image-20220108220412625](04 IIC.assets/image-20220108220412625.png)
+![image-20220108220412625](04_IIC.assets/image-20220108220412625.png)
 
 
 
 **原理**：是该 I2C controller 上不断发出地址信息，地址信息从 0~255 ，看有没有受到回应信号。收到回应信号说明该地址上有设备。
 
-![image-20220108220543765](04 IIC.assets/image-20220108220543765.png)
+![image-20220108220543765](04_IIC.assets/image-20220108220543765.png)
 
 
 
@@ -2295,31 +2295,31 @@ i2ctransfer -f -y 0 w1@0x1e 0xe r2
 // 1e 代表是该地址的I2C设备存在，并且在内核中还没有该设备的驱动程序
 ```
 
-![image-20220108220729752](04 IIC.assets/image-20220108220729752.png)
+![image-20220108220729752](04_IIC.assets/image-20220108220729752.png)
 
-![image-20220108220742302](04 IIC.assets/image-20220108220742302.png)
+![image-20220108220742302](04_IIC.assets/image-20220108220742302.png)
 
 
 
-![image-20220108230000318](04 IIC.assets/image-20220108230000318.png)
+![image-20220108230000318](04_IIC.assets/image-20220108230000318.png)
 
 
 
 想知道这个单板上有多少条 I2C 总线呢？可以使用 i2cdetect -l 列出所有的 I2C 总线。
 
-![image-20220108222255474](04 IIC.assets/image-20220108222255474.png)
+![image-20220108222255474](04_IIC.assets/image-20220108222255474.png)
 
 然后可以一个个总线去监测是否有 I2C 设备
 
-![image-20220108223514946](04 IIC.assets/image-20220108223514946.png)
+![image-20220108223514946](04_IIC.assets/image-20220108223514946.png)
 
 
 
-![image-20220108223531549](04 IIC.assets/image-20220108223531549.png)
+![image-20220108223531549](04_IIC.assets/image-20220108223531549.png)
 
 
 
-![image-20220108223609060](04 IIC.assets/image-20220108223609060.png)
+![image-20220108223609060](04_IIC.assets/image-20220108223609060.png)
 
 
 
@@ -2339,11 +2339,11 @@ i2cget -f -y 0 0x1e 0xe w  // 读距离：读寄存器 0xE、0xF 得到 2字节�
 
 
 
-![image-20220108224624075](04 IIC.assets/image-20220108224624075.png)
+![image-20220108224624075](04_IIC.assets/image-20220108224624075.png)
 
 
 
-![image-20220108225038532](04 IIC.assets/image-20220108225038532.png)
+![image-20220108225038532](04_IIC.assets/image-20220108225038532.png)
 
 
 
@@ -2362,11 +2362,11 @@ i2ctransfer -f -y 0 w1@0x1e 0xe r2
 
 
 
-![image-20220108225332120](04 IIC.assets/image-20220108225332120.png)
+![image-20220108225332120](04_IIC.assets/image-20220108225332120.png)
 
 
 
-![image-20220108225659724](04 IIC.assets/image-20220108225659724.png)
+![image-20220108225659724](04_IIC.assets/image-20220108225659724.png)
 
 
 
@@ -2374,11 +2374,11 @@ i2ctransfer -f -y 0 w1@0x1e 0xe r2
 
 
 
-![image-20220108230409604](04 IIC.assets/image-20220108230409604.png)
+![image-20220108230409604](04_IIC.assets/image-20220108230409604.png)
 
 芯片原厂已经提供了I2C的设备树，内核中也有了I2C控制器的驱动程序，所以就已经有了I2C的设备节点。
 
-![image-20220108230729869](04 IIC.assets/image-20220108230729869.png)
+![image-20220108230729869](04_IIC.assets/image-20220108230729869.png)
 
 
 
@@ -2396,13 +2396,13 @@ i2ctransfer -f -y 0 w1@0x1e 0xe r2
 
 正常的直接 make 的编译
 
-![image-20220108232020739](04 IIC.assets/image-20220108232020739.png)
+![image-20220108232020739](04_IIC.assets/image-20220108232020739.png)
 
 如果不想使用动态库的话，想要打开 readme 查看里面的说明，使用下面的指令来编译：使用静态库
 
-![image-20220108232130712](04 IIC.assets/image-20220108232130712.png)
+![image-20220108232130712](04_IIC.assets/image-20220108232130712.png)
 
-![image-20220108232232439](04 IIC.assets/image-20220108232232439.png)
+![image-20220108232232439](04_IIC.assets/image-20220108232232439.png)
 
 
 
@@ -2422,14 +2422,14 @@ Linux驱动程序: `drivers/i2c/i2c-dev.c`
 
 从芯片手册上可以知道，AT24C02的设备地址跟它的A2、A1、A0引脚有关：
 
-![image-20210225173113723](04 IIC.assets/038_at24c02_device_address.png)
+![image-20210225173113723](04_IIC.assets/038_at24c02_device_address.png)
 
 打开I2C模块的原理图(这2个文件是一样的)：
 
 * `STM32MP157\开发板配套资料\原理图\04_Extend_modules(外设模块)\eeprom.zip\i2c_eeprom_module_v1.0.pdf`
 * `IMX6ULL\开发板配套资料\原理图\Extend_modules\eeprom.zip\i2c_eeprom_module_v1.0.pdf`
 * 如下：
-  ![image-20210225173414072](04 IIC.assets/039_at24c02_sch.png)
+  ![image-20210225173414072](04_IIC.assets/039_at24c02_sch.png)
 
 从原理图可知，A2A1A0都是0，所以AT24C02的设备地址是：0b1010000，即0x50。
 
@@ -2437,7 +2437,7 @@ Linux驱动程序: `drivers/i2c/i2c-dev.c`
 
 #### 13.1.2 写数据
 
-![image-20220109154243624](04 IIC.assets/image-20220109154243624.png)
+![image-20220109154243624](04_IIC.assets/image-20220109154243624.png)
 
 
 
@@ -2447,11 +2447,11 @@ Linux驱动程序: `drivers/i2c/i2c-dev.c`
 连续读多个字节时，芯片内部的地址会自动累加。
 当地址到达存储空间最后一个地址时，会从0开始。
 
-![image-20220109154742269](04 IIC.assets/image-20220109154742269.png)
+![image-20220109154742269](04_IIC.assets/image-20220109154742269.png)
 
 可以在上面的基础上，可以一直读数据，它会自动给我们把存储指针移动。
 
-![image-20220109155033074](04 IIC.assets/image-20220109155033074.png)
+![image-20220109155033074](04_IIC.assets/image-20220109155033074.png)
 
 ### 13.2 编写 APP 注意点
 
@@ -2914,7 +2914,7 @@ platform_device_driver 总线是一条虚拟的总线，i2c_bus总线是一条�
 
 
 
-![image-20220111160645692](04 IIC.assets/image-20220111160645692.png)
+![image-20220111160645692](04_IIC.assets/image-20220111160645692.png)
 
 
 
@@ -3014,9 +3014,9 @@ i2c_client表示一个I2C设备，创建i2c_client的方法有4种：
 
   然后我们注册的 i2c_driver 的话，如果成功了，也会在
 
-  ![image-20220111221617562](04 IIC.assets/image-20220111221617562.png)
+  ![image-20220111221617562](04_IIC.assets/image-20220111221617562.png)
 
-![image-20220111222010516](04 IIC.assets/image-20220111222010516.png)
+![image-20220111222010516](04_IIC.assets/image-20220111222010516.png)
 
 自己测试：
 
@@ -3061,11 +3061,11 @@ static struct i2c_driver ap3216c_driver = {
 
 运行结果
 
-![image-20220111222606950](04 IIC.assets/image-20220111222606950.png)
+![image-20220111222606950](04_IIC.assets/image-20220111222606950.png)
 
 
 
-![image-20220111222734920](04 IIC.assets/image-20220111222734920.png)
+![image-20220111222734920](04_IIC.assets/image-20220111222734920.png)
 
 
 
@@ -3221,15 +3221,15 @@ static struct i2c_driver ap3216c_driver = {
 
   如果有新创建的 i2c_client ，下面就会出现该设备地址为名字的一个文件夹
 
-  ![image-20220112113309201](04 IIC.assets/image-20220112113309201.png)
+  ![image-20220112113309201](04_IIC.assets/image-20220112113309201.png)
 
   并且
 
-  ![image-20220112113432602](04 IIC.assets/image-20220112113432602.png)
+  ![image-20220112113432602](04_IIC.assets/image-20220112113432602.png)
 
   查看挂载的 i2c_driver 
 
-  ![image-20220112114054168](04 IIC.assets/image-20220112114054168.png)
+  ![image-20220112114054168](04_IIC.assets/image-20220112114054168.png)
 
   
 
@@ -3269,7 +3269,7 @@ static struct i2c_driver ap3216c_driver = {
 
   ​      
 
-![image-20220112094840577](04 IIC.assets/image-20220112094840577.png)
+![image-20220112094840577](04_IIC.assets/image-20220112094840577.png)
 
 
 
@@ -3285,11 +3285,11 @@ static struct i2c_driver ap3216c_driver = {
 
 #### 14.1.3 回顾一下 platform_device_driver 模型
 
-![image-20220111150920391](04 IIC.assets/image-20220111150920391.png)
+![image-20220111150920391](04_IIC.assets/image-20220111150920391.png)
 
 
 
-![image-20220111151101571](04 IIC.assets/image-20220111151101571.png)
+![image-20220111151101571](04_IIC.assets/image-20220111151101571.png)
 
 
 
@@ -3469,7 +3469,7 @@ static void __exit i2c_exit(void)
 
 ### 15.1 i2c系统整体框架
 
-![image-20220112115129703](04 IIC.assets/image-20220112115129703.png)
+![image-20220112115129703](04_IIC.assets/image-20220112115129703.png)
 
 ·
 
@@ -3477,7 +3477,7 @@ static void __exit i2c_exit(void)
 
 
 
-![image-20220112120054371](04 IIC.assets/image-20220112120054371.png)
+![image-20220112120054371](04_IIC.assets/image-20220112120054371.png)
 
 ### 15.3 编写一个虚拟的 i2c_adapter
 
@@ -3607,7 +3607,7 @@ const struct i2c_algorithm i2c_bus_virtual_algo = {
 
 
 
-![image-20220112165242437](04 IIC.assets/image-20220112165242437.png)
+![image-20220112165242437](04_IIC.assets/image-20220112165242437.png)
 
 为什么能检测到有这个模拟的 eeprom？
 
@@ -3615,7 +3615,7 @@ const struct i2c_algorithm i2c_bus_virtual_algo = {
 
 - 这个设备还没有对应 i2c_driver 驱动，所以才显示 0x50，没有显示 0xUU。
 
-![image-20220112165524139](04 IIC.assets/image-20220112165524139.png)
+![image-20220112165524139](04_IIC.assets/image-20220112165524139.png)
 
 ```c
 // 假设虚拟I2C BUS号为4
@@ -3624,7 +3624,7 @@ const struct i2c_algorithm i2c_bus_virtual_algo = {
 0x0c
 ```
 
-![image-20220112170126048](04 IIC.assets/image-20220112170126048.png)
+![image-20220112170126048](04_IIC.assets/image-20220112170126048.png)
 
 
 
@@ -3648,31 +3648,31 @@ const struct i2c_algorithm i2c_bus_virtual_algo = {
 
 
 
-![image-20220112175233643](04 IIC.assets/image-20220112175233643.png)
+![image-20220112175233643](04_IIC.assets/image-20220112175233643.png)
 
 
 
-![image-20220112175347324](04 IIC.assets/image-20220112175347324.png)
+![image-20220112175347324](04_IIC.assets/image-20220112175347324.png)
 
 
 
-![image-20220112180202715](04 IIC.assets/image-20220112180202715.png)
+![image-20220112180202715](04_IIC.assets/image-20220112180202715.png)
 
 
 
-![image-20220112180323448](04 IIC.assets/image-20220112180323448.png)
-
-
-
-
-
-![image-20220112180748255](04 IIC.assets/image-20220112180748255.png)
+![image-20220112180323448](04_IIC.assets/image-20220112180323448.png)
 
 
 
 
 
-![image-20220112181507888](04 IIC.assets/image-20220112181507888.png)
+![image-20220112180748255](04_IIC.assets/image-20220112180748255.png)
+
+
+
+
+
+![image-20220112181507888](04_IIC.assets/image-20220112181507888.png)
 
 
 
@@ -3687,7 +3687,7 @@ I2C协议中数据传输的单位是字节，也就是8位。但是要用到9个
 
 I2C协议信号如下：
 
-![image-20210220151524099](04 IIC.assets/009_i2c_signal.png)
+![image-20210220151524099](04_IIC.assets/009_i2c_signal.png)
 
 
 
@@ -3703,18 +3703,18 @@ I2C协议信号如下：
 
 ### 16.3 I2C-GPIO驱动层次
 
-![image-20210312120002847](04 IIC.assets/064_i2c-gpio_level.png)
+![image-20210312120002847](04_IIC.assets/064_i2c-gpio_level.png)
 
 
 
 **传输函数分析**
 
 看视频分析i2c_outb函数：`drivers\i2c\algos\i2c-algo-bit.c`
-![image-20210312120147495](04 IIC.assets/065_i2c_outb.png)
+![image-20210312120147495](04_IIC.assets/065_i2c_outb.png)
 
 
 
-![image-20220112201557900](04 IIC.assets/image-20220112201557900.png)
+![image-20220112201557900](04_IIC.assets/image-20220112201557900.png)
 
 
 
@@ -3771,9 +3771,9 @@ i2c_gpio_lyh {
 
 ##### （1）确认是否配置开启了内核的 i2c-gpio
 
-![image-20220112204621840](04 IIC.assets/image-20220112204621840.png)
+![image-20220112204621840](04_IIC.assets/image-20220112204621840.png)
 
-![image-20220112204509813](04 IIC.assets/image-20220112204509813.png)
+![image-20220112204509813](04_IIC.assets/image-20220112204509813.png)
 
 ##### （2）开启内核的 i2c-gpio
 
@@ -3781,19 +3781,19 @@ i2c_gpio_lyh {
 
 - 先在 **/driver/i2c/** 文件夹下搜索   **i2c-gpio** 应该，然后找到配置项   **CONFIG_I2C_GPIO**
 
-![image-20220112205342277](04 IIC.assets/image-20220112205342277.png)
+![image-20220112205342277](04_IIC.assets/image-20220112205342277.png)
 
 - 然后打开 **make menuconfig** ，在里面直接搜索  **CONFIG_I2C_GPIO**
 
-![image-20220112205203206](04 IIC.assets/image-20220112205203206.png)
+![image-20220112205203206](04_IIC.assets/image-20220112205203206.png)
 
-![image-20220112205108368](04 IIC.assets/image-20220112205108368.png)
+![image-20220112205108368](04_IIC.assets/image-20220112205108368.png)
 
 这个搜索很厉害
 
-![image-20220112210602979](04 IIC.assets/image-20220112210602979.png)
+![image-20220112210602979](04_IIC.assets/image-20220112210602979.png)
 
-![image-20220112210637033](04 IIC.assets/image-20220112210637033.png)
+![image-20220112210637033](04_IIC.assets/image-20220112210637033.png)
 
 ##### （3）编译模块
 
@@ -3809,33 +3809,33 @@ make modules   // 得到 drivers/i2c/busses/i2c-gpio.ko
 
 ![image-20220112205342277](file://C:/Users/Administrator/Desktop/LYH/myLinux/driver_total/04%20IIC.assets/image-20220112205342277.png?lastModify=1641904374)
 
-![image-20220112211132823](04 IIC.assets/image-20220112211132823.png)
+![image-20220112211132823](04_IIC.assets/image-20220112211132823.png)
 
 ##### （4）实验现象
 
-![image-20220112212312466](04 IIC.assets/image-20220112212312466.png)
+![image-20220112212312466](04_IIC.assets/image-20220112212312466.png)
 
 设备树解析之后，可以得到这个节点，也是一个平台设备驱动。
 
 加载 i2c-gpio.ko 驱动
 
-![image-20220112213428149](04 IIC.assets/image-20220112213428149.png)
+![image-20220112213428149](04_IIC.assets/image-20220112213428149.png)
 
 就多了一个模拟的 i2c 驱动
 
-![image-20220112213512410](04 IIC.assets/image-20220112213512410.png)
+![image-20220112213512410](04_IIC.assets/image-20220112213512410.png)
 
 查看设备挂载情况
 
-![image-20220112213927673](04 IIC.assets/image-20220112213927673.png)
+![image-20220112213927673](04_IIC.assets/image-20220112213927673.png)
 
 接上设备之后，快的一批
 
-![image-20220112214024152](04 IIC.assets/image-20220112214024152.png)
+![image-20220112214024152](04_IIC.assets/image-20220112214024152.png)
 
 直接读写 EEPROM，没有问题
 
-![image-20220112214139448](04 IIC.assets/image-20220112214139448.png)
+![image-20220112214139448](04_IIC.assets/image-20220112214139448.png)
 
 
 
@@ -4109,7 +4109,7 @@ bailout:
 
 
 
-![image-20220112215223528](04 IIC.assets/image-20220112215223528.png)
+![image-20220112215223528](04_IIC.assets/image-20220112215223528.png)
 
 
 
@@ -4117,9 +4117,9 @@ bailout:
 
 
 
-![image-20220112220509642](04 IIC.assets/image-20220112220509642.png)
+![image-20220112220509642](04_IIC.assets/image-20220112220509642.png)
 
-![image-20220112220552456](04 IIC.assets/image-20220112220552456.png)
+![image-20220112220552456](04_IIC.assets/image-20220112220552456.png)
 
 
 
@@ -4595,11 +4595,11 @@ static int i2c_imx_read(struct imx_i2c_struct *i2c_imx, struct i2c_msg *msgs, bo
 
 
 
-![image-20220111203344937](04 IIC.assets/image-20220111203344937.png)
+![image-20220111203344937](04_IIC.assets/image-20220111203344937.png)
 
 
 
-![image-20220111203840556](04 IIC.assets/image-20220111203840556.png)
+![image-20220111203840556](04_IIC.assets/image-20220111203840556.png)
 
 
 
@@ -4607,7 +4607,7 @@ static int i2c_imx_read(struct imx_i2c_struct *i2c_imx, struct i2c_msg *msgs, bo
 
 
 
-![image-20220111220715802](04 IIC.assets/image-20220111220715802.png)
+![image-20220111220715802](04_IIC.assets/image-20220111220715802.png)
 
 
 
@@ -4636,7 +4636,7 @@ static int i2c_imx_read(struct imx_i2c_struct *i2c_imx, struct i2c_msg *msgs, bo
 
   那么对于上层来说，i2c-core.c这一层提供的smbus和标准的iic收发函数，其实里面是需要传入 i2c_adapter的，所以这种实现方法和底层使用的模拟或者硬件实现是分割开的
 
-![image-20220113114456220](04 IIC.assets/image-20220113114456220.png)
+![image-20220113114456220](04_IIC.assets/image-20220113114456220.png)
 
 ### 1N7. imx6ull有4个i2c，为什么值注册了2个i2c_adapter：按需分配
 
@@ -4755,29 +4755,29 @@ i2c4: i2c@021f8000 {
 
 ### N3 of_match_table 中私有数据的问题（解决）
 
-![image-20220109204850520](04 IIC.assets/image-20220109204850520.png)
+![image-20220109204850520](04_IIC.assets/image-20220109204850520.png)
 
 
 
 ### N4 开启内核打印信息，也就是可以输出到终端上，不用 dmesg（解决）
 
-![image-20220109210709555](04 IIC.assets/image-20220109210709555.png)
+![image-20220109210709555](04_IIC.assets/image-20220109210709555.png)
 
 
 
 
 
-![image-20220109222650167](04 IIC.assets/image-20220109222650167.png)
+![image-20220109222650167](04_IIC.assets/image-20220109222650167.png)
 
 
 
 i2c-gpio.c 需要开启内核，才编译进内核中，或者编译为 .ko
 
-![image-20220109230017819](04 IIC.assets/image-20220109230017819.png)
+![image-20220109230017819](04_IIC.assets/image-20220109230017819.png)
 
 
 
-![image-20220109230450281](04 IIC.assets/image-20220109230450281.png)
+![image-20220109230450281](04_IIC.assets/image-20220109230450281.png)
 
 
 
@@ -4787,7 +4787,7 @@ i2c-gpio.c 需要开启内核，才编译进内核中，或者编译为 .ko
 
 `cat /proc/sys/kernel/printk`
 
-![image-20220110112902267](04 IIC.assets/image-20220110112902267.png)
+![image-20220110112902267](04_IIC.assets/image-20220110112902267.png)
 
 7                                                  7                                               1                                                7
 
@@ -4840,7 +4840,7 @@ echo 8 4 1 7 > /proc/sys/kernel/printk
 
 
 
-![image-20220110113604719](04 IIC.assets/image-20220110113604719.png)
+![image-20220110113604719](04_IIC.assets/image-20220110113604719.png)
 
 
 

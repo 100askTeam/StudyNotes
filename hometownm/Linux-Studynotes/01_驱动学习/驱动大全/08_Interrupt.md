@@ -17,7 +17,7 @@
   **CPU每执行完一条指令，都会判断一下是否有中断发生了。**
   CPU也有自己的寄存器，可以设置它来使能/禁止中断，这是中断处理的总开关。
 
-![](08 Interrupt.assets/002_exception_on_arm.png)
+![](08_Interrupt.assets/002_exception_on_arm.png)
 
 ## 9.2 STM32F103的GPIO中断
 
@@ -26,7 +26,7 @@
 对于GPIO中断，STM32F103又引入了`External interrupt/event controller (EXTI)`。
 用来设置GPIO的中断类型，如下图：
 
-![](08 Interrupt.assets/017_stm32f103_gpio_to_nvic.png)
+![](08_Interrupt.assets/017_stm32f103_gpio_to_nvic.png)
 
 EXTI可以给NVIC提供16个中断信号：EXTI0~EXTI15。
 **那么某个EXTIx，它来自哪些GPIO呢？**这需要设置GPIO控制器。
@@ -37,13 +37,13 @@ STM32F103的GPIO控制器中有AFIO_EXTICR1~AFIO_EXTICR4一共4个寄存器
 名为：External interrupt configuration register，外部中断配置寄存器。
 用来选择某个外部中断EXTIx的中断源，示例如下：
 
-![](08 Interrupt.assets/016_stm32f103_gpio_interrtup.png)
+![](08_Interrupt.assets/016_stm32f103_gpio_interrtup.png)
 
 **注意**：从上图可知，EXTI0只能从PA0、……、PG0中选择一个，这也**意味着PA0、……、PG0中只有一个引脚可以用于中断【st公司的是这样】**。**这跟其他芯片不一样，很多芯片的任一GPIO引脚都可以同时用于中断【imx6ull】**。
 
 
 
-![](08 Interrupt.assets/025_external_int_gpio_mapping.png)
+![](08_Interrupt.assets/025_external_int_gpio_mapping.png)
 
 ### 9.2.2 EXTI
 
@@ -51,7 +51,7 @@ STM32F103的GPIO控制器中有AFIO_EXTICR1~AFIO_EXTICR4一共4个寄存器
 但是，这个中断的触发方式是怎么的？高电平触发、低电平触发、上升沿触发、下降沿触发？
 这需要进一步设置。
 EXTI框图如下：
-![](08 Interrupt.assets/018_stm32f103_exti.png)
+![](08_Interrupt.assets/018_stm32f103_exti.png)
 
 沿着上面框图中的红线，我们要设置：
 
@@ -65,7 +65,7 @@ EXTI框图如下：
 
 要使用EXTI，流程如下：
 
-![](08 Interrupt.assets/019_stm32f103_how_to_use_exti.png)
+![](08_Interrupt.assets/019_stm32f103_how_to_use_exti.png)
 
 翻译如下：
 
@@ -78,13 +78,13 @@ EXTI框图如下：
 多个中断源汇聚到NVIC，**NVIC的职责就是从多个中断源中取出优先级最高的中断**，向CPU发出中断信号。
 处理中断时，程序可以写NVIC的寄存器，清除中断。
 涉及的寄存器：
-![](08 Interrupt.assets/020_stm32f103_nvic_registers.png)
+![](08_Interrupt.assets/020_stm32f103_nvic_registers.png)
 
 我们暂时只需要关注：ISER(中断设置使能寄存器)、ICPR(中断清除挂起寄存器)。
 要注意的是，这些寄存器有很多个，比如ISER0、ISER1等等。里面的每一位对应一个中断。
 ISER0中的bit0对应异常向量表中的第16项(向量表从第0项开始)，如下图：
 
-![image-20201115125952814](08 Interrupt.assets/021_stm32f103_nvic_iser_icer.png)
+![image-20201115125952814](08_Interrupt.assets/021_stm32f103_nvic_iser_icer.png)
 
 
 
@@ -94,7 +94,7 @@ cortex M3/M4处理器内部有这几个寄存器：
 
 #### 1. PRIMASK
 
-  ![](08 Interrupt.assets/022_cortex_m3_primask.png)
+  ![](08_Interrupt.assets/022_cortex_m3_primask.png)
 
   把PRIMASK的bit0设置为1，就可以屏蔽所有**优先级可配置**的中断。
   可以使用这些指令来设置它：
@@ -115,7 +115,7 @@ cortex M3/M4处理器内部有这几个寄存器：
 
 #### 2. FAULTMASK
 
-  ![image-20201115132713862](08 Interrupt.assets/023_cortex_m3_faultmask.png)
+  ![image-20201115132713862](08_Interrupt.assets/023_cortex_m3_faultmask.png)
 
   FAULTMASK和PRIMASK很像，它更进一步，出来一般的中断外，把HardFault都禁止了。
   只有NMI可以发生。
@@ -137,7 +137,7 @@ cortex M3/M4处理器内部有这几个寄存器：
 
 #### 3. BASEPRI
 
-  ![](08 Interrupt.assets/024_cortex_m3_basemask.png)
+  ![](08_Interrupt.assets/024_cortex_m3_basemask.png)
 
 
   BASEPRI用来屏蔽这些中断：它们的优先级，其值大于或等于BASEPRI。
@@ -158,7 +158,7 @@ cortex M3/M4处理器内部有这几个寄存器：
 
 STM32MP157的GPIO中断在硬件上的框架，跟STM32F103是类似的。
 它们的中断控制器不一样，STM32MP157中使用的是GIC：
-![](08 Interrupt.assets/026_stm32mp157_gpio_o_gic.png)
+![](08_Interrupt.assets/026_stm32mp157_gpio_o_gic.png)
 
 ### 9.3.1 GPIO控制器
 
@@ -177,7 +177,7 @@ GPIO引脚触发中断的方式是怎样的？高电平触发、低电平触发�
 这需要进一步设置。
 这些，都是在EXTI中配置，EXTI框图如下：
 
-![](08 Interrupt.assets/027_stm32mp157_exti.png)
+![](08_Interrupt.assets/027_stm32mp157_exti.png)
 
 沿着红线走：
 
@@ -185,29 +185,29 @@ GPIO引脚触发中断的方式是怎样的？高电平触发、低电平触发�
 
 选择哪些GPIO可以发出中断。
 **只有16个EXTI中断**，从EXTI0~EXTI15；每个EXTIx中断只能从PAx、PBx、……中选择某个引脚，如下图所示：
-![](08 Interrupt.assets/028_stm32mp157_external_int_gpio_mapping.png)
+![](08_Interrupt.assets/028_stm32mp157_external_int_gpio_mapping.png)
 
 **注意**：从上图可知，EXTI0只能从PA0、……中选择一个，这也意味着PA0、……中只有一个引脚可以用于中断。这跟其他芯片不一样，很多芯片的任一GPIO引脚都可以同时用于中断。
 
 通过EXTI_EXTICR1等寄存器来设置EXTIx的中断源是哪个GPIO引脚，入下图所示：
 
-  ![](08 Interrupt.assets/029_stm32mp157_exti_exticr1.png)
+  ![](08_Interrupt.assets/029_stm32mp157_exti_exticr1.png)
 
 #### 2. 设置`Event Trigger`
 
 设置中断触发方式：
 
-![image-20201115225316786](08 Interrupt.assets/030_stm32mp157_exti_rtsr1_ftsr1.png)
+![image-20201115225316786](08_Interrupt.assets/030_stm32mp157_exti_rtsr1_ftsr1.png)
 
 #### 3. 设置`Masking`
 
 允许某个EXTI中断：
 
-![](08 Interrupt.assets/031_stm32mp157_exti_imr1.png)
+![](08_Interrupt.assets/031_stm32mp157_exti_imr1.png)
 
 #### 4. 查看中断状态、清中断
 
-![](08 Interrupt.assets/032_stm32mp157_exti_rpr1_fpr1.png)
+![](08_Interrupt.assets/032_stm32mp157_exti_rpr1_fpr1.png)
 
 ### 9.3.3 GIC
 
@@ -218,7 +218,7 @@ GIC比较复杂，下一个视频再详细讲解。
 ### 9.3.4 CPU
 
 **CPU的CPSR寄存器中有一位：I位，用来使能/禁止中断。**
-![](08 Interrupt.assets/008_xpsr.png)
+![](08_Interrupt.assets/008_xpsr.png)
 
 可以使用以下汇编指令修改I位：
 
@@ -234,7 +234,7 @@ GIC比较复杂，下一个视频再详细讲解。
 IMX6ULL的GPIO中断在硬件上的框架，跟STM32MP157是类似的。
 IMX6ULL中没有EXTI控制器，**对GPIO的中断配置、控制，都在GPIO模块内部实现**：
 
-![image-20201116000539003](08 Interrupt.assets/033_imx6ull_gpio_gic.png)
+![image-20201116000539003](08_Interrupt.assets/033_imx6ull_gpio_gic.png)
 
 
 
@@ -244,19 +244,19 @@ IMX6ULL中没有EXTI控制器，**对GPIO的中断配置、控制，都在GPIO�
 
 每组GPIO中都有对应的GPIOx_ICR1、GPIOx_ICR2寄存器(interrupt configuration register )。
 每个引脚都可以配置为中断引脚，并配置它的触发方式：
-![](08 Interrupt.assets/034_imx6ull_gpiox_icr1.png)
+![](08_Interrupt.assets/034_imx6ull_gpiox_icr1.png)
 
 
 
 #### 2. 使能GPIO中断
 
-![](08 Interrupt.assets/035_imx6ull_gpiox_imr.png)
+![](08_Interrupt.assets/035_imx6ull_gpiox_imr.png)
 
 
 
 #### 3. 判断中断状态、清中断
 
-![image-20201116001853748](08 Interrupt.assets/036_imx6ull_gpiox_isr.png)
+![image-20201116001853748](08_Interrupt.assets/036_imx6ull_gpiox_isr.png)
 
 ### 9.4.2 GIC
 
@@ -267,7 +267,7 @@ GIC比较复杂，下一个视频再详细讲解。
 ### 9.4.3 CPU
 
 CPU的CPSR寄存器中有一位：I位，用来使能/禁止中断。
-![](08 Interrupt.assets/008_xpsr.png)
+![](08_Interrupt.assets/008_xpsr.png)
 
 可以使用以下汇编指令修改I位：
 

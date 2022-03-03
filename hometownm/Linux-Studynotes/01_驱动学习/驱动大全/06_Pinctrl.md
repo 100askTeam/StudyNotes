@@ -14,9 +14,10 @@
 
 ### 1.1 Pinctrl作用
 
-![image-20210430121123225](06 Pinctrl.assets/06_pinctrl_hardware_block.png)
+![image-20210430121123225](06_Pinctrl.assets/06_pinctrl_hardware_block.png)
 
 芯片内部有很多控制器 gpio i2c uart 然后他们都需要有引脚才能与外部交流，而芯片也有很多引脚 pin，然后这些 pin 是独立的，这些 pin连接到哪一个控制器（外设）上，就需要中间有一个 pin controller 子系统来管理，而这个 **pin controller 子系统** 这是软件上抽象的一个概念，其主要功能在下面介绍。
+
 
 
 
@@ -60,11 +61,11 @@ Pinctrl驱动由芯片厂家的BSP工程师提供，一般的驱动工程师只�
 
 
 
-![image-20220113110131124](06 Pinctrl.assets/image-20220113110131124.png)
+![image-20220113110131124](06_Pinctrl.assets/image-20220113110131124.png)
 
 
 
-![image-20220113110907266](06 Pinctrl.assets/image-20220113110907266.png)
+![image-20220113110907266](06_Pinctrl.assets/image-20220113110907266.png)
 
 
 
@@ -74,7 +75,7 @@ Pinctrl驱动由芯片厂家的BSP工程师提供，一般的驱动工程师只�
 
 比如在platform_device和platform_driver的枚举过程中，流程如下：
 
-![img](06 Pinctrl.assets/clip_image002.jpg)
+![img](06_Pinctrl.assets/clip_image002.jpg)
 
 当系统休眠时，也会去设置该设备sleep状态对应的引脚，不需要我们自己去调用代码。
 
@@ -104,7 +105,7 @@ pinctrl_put(struct pinctrl *p);   // 不再使用, 退出时调用
 
 以I2C为例：
 
-![image-20210502105854634](06 Pinctrl.assets/07_i2c_example.png)
+![image-20210502105854634](06_Pinctrl.assets/07_i2c_example.png)
 
 
 
@@ -133,7 +134,7 @@ pinctrl_put(struct pinctrl *p);   // 不再使用, 退出时调用
 * 下载开发板配套资料
 * 下载完后，工具在如下目录里：
 
-![](06 Pinctrl.assets/08_pins_tools.png)
+![](06_Pinctrl.assets/08_pins_tools.png)
 
 
 
@@ -179,7 +180,7 @@ pinctrl_put(struct pinctrl *p);   // 不再使用, 退出时调用
 
 比如在platform_device和platform_driver的枚举过程中，流程如下：
 
-![](06 Pinctrl.assets/09_pinctrl_really_probe.png)
+![](06_Pinctrl.assets/09_pinctrl_really_probe.png)
 
 
 

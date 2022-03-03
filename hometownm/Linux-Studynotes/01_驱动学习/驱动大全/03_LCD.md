@@ -2,7 +2,7 @@
 
 
 
-![image-20220104205042790](03 LCD.assets/image-20220104205042790.png)
+![image-20220104205042790](03_LCD.assets/image-20220104205042790.png)
 
 
 
@@ -26,9 +26,9 @@
 
   **在内核里面，已经有一个fbmem.c，帮我们实现了这个0~4个字符设备驱动的框架。**
 
-  ![image-20211226141438628](03 LCD.assets/image-20211226141438628.png)**对于不同的硬件，不同的LCD，都会有不同的  fb_info   结构体。**
+  ![image-20211226141438628](03_LCD.assets/image-20211226141438628.png)**对于不同的硬件，不同的LCD，都会有不同的  fb_info   结构体。**
 
-  ![image-20211226143406217](03 LCD.assets/image-20211226143406217.png)
+  ![image-20211226143406217](03_LCD.assets/image-20211226143406217.png)
 
 * xxx_fb.c：硬件相关的驱动程序
 
@@ -43,11 +43,11 @@
 
 **info->screen_base就是显存的基地址，p是offset，**
 
-![image-20220105133900117](03 LCD.assets/image-20220105133900117.png)
+![image-20220105133900117](03_LCD.assets/image-20220105133900117.png)
 
 **先把用户空间的数据buf拷贝到src也就是动态申请的内存 buffer中，然后再把 buffer的数据拷贝到显存的基地址中**
 
-![image-20220105134049796](03 LCD.assets/image-20220105134049796.png)
+![image-20220105134049796](03_LCD.assets/image-20220105134049796.png)
 
 
 
@@ -85,7 +85,7 @@ kernel:
 
 核心：分配、设置、注册 fb_info结构体
 
-![image-20210104110840858](03 LCD.assets/007_fb_info.png)
+![image-20210104110840858](03_LCD.assets/007_fb_info.png)
 
 * 分配fb_info
 
@@ -105,7 +105,7 @@ kernel:
 
     
 
-![image-20211226144107554](03 LCD.assets/image-20211226144107554.png)
+![image-20211226144107554](03_LCD.assets/image-20211226144107554.png)
 
 
 
@@ -123,7 +123,7 @@ kernel:
 
 
 
-![image-20211225191028801](03 LCD.assets/image-20211225191028801.png)
+![image-20211225191028801](03_LCD.assets/image-20211225191028801.png)
 
 
 
@@ -139,27 +139,27 @@ kernel:
 
 ### 3.1 157的引脚
 
-![image-20211225192316274](03 LCD.assets/image-20211225192316274.png)
+![image-20211225192316274](03_LCD.assets/image-20211225192316274.png)
 
 
 
 ### 3.2 103的引脚
 
-![image-20211225192556053](03 LCD.assets/image-20211225192556053.png)
+![image-20211225192556053](03_LCD.assets/image-20211225192556053.png)
 
 
 
-![image-20211225232345463](03 LCD.assets/image-20211225232345463.png)
+![image-20211225232345463](03_LCD.assets/image-20211225232345463.png)
 
-![image-20211225232401123](../../../../AppData/Roaming/Typora/typora-user-images/image-20211225232401123.png)
-
-
-
-![image-20211225234404011](03 LCD.assets/image-20211225234404011.png)
+![image-20211225232401123](03_LCD.assets/image-20211225232401123.png)
 
 
 
-![image-20211226003925488](03 LCD.assets/image-20211226003925488.png)
+![image-20211225234404011](03_LCD.assets/image-20211225234404011.png)
+
+
+
+![image-20211226003925488](03_LCD.assets/image-20211226003925488.png)
 
 
 
@@ -171,15 +171,15 @@ kernel:
 
 根节点下的这个 iomuxc ，里面有 compatible 属性，所以必定会转换成一个平台设备，所以 pinctrl 在内核中的实现，必定会有一个对应的驱动。直接查看 pinctrl-imx.c 驱动文件中的 probe 函数
 
-![image-20211228100831816](03 LCD.assets/image-20211228100831816.png)
+![image-20211228100831816](03_LCD.assets/image-20211228100831816.png)
 
 
 
-![image-20211228101002018](../../../../AppData/Roaming/Typora/typora-user-images/image-20211228101002018.png)
+![image-20211228101002018](03_LCD.assets/image-20211228101002018.png)
 
 找到  pinctrl 的驱动文件。
 
-![image-20211228101948594](03 LCD.assets/image-20211228101948594.png)
+![image-20211228101948594](03_LCD.assets/image-20211228101948594.png)
 
 
 
@@ -315,9 +315,9 @@ platform_device
 
 
 
-![image-20211228105840105](03 LCD.assets/image-20211228105840105.png)
+![image-20211228105840105](03_LCD.assets/image-20211228105840105.png)
 
-![image-20211228110235353](03 LCD.assets/image-20211228110235353.png)
+![image-20211228110235353](03_LCD.assets/image-20211228110235353.png)
 
 
 
@@ -335,19 +335,19 @@ platform_device
 - 需要修改的是LCD驱动程序目录中的子makefile，如下图，mxsfb.c这个LCD驱动文件就在下面的文件夹中`/home/book/myDoc/100ask_imx6ull-sdk/Linux-4.9.88/drivers/video/fbdev`
 - 需要修改的是这个文件夹中的makefile
 
-![image-20220103125637925](03 LCD.assets/image-20220103125637925.png)
+![image-20220103125637925](03_LCD.assets/image-20220103125637925.png)
 
 - 打开 Makefile进行修改
 
-![image-20220103130115392](03 LCD.assets/image-20220103130115392.png)
+![image-20220103130115392](03_LCD.assets/image-20220103130115392.png)
 
 
 
 （3）需要把LCD驱动源程序添加到某个文件夹中
 
-![image-20220103130340099](03 LCD.assets/image-20220103130340099.png)
+![image-20220103130340099](03_LCD.assets/image-20220103130340099.png)
 
-![image-20220103130403988](03 LCD.assets/image-20220103130403988.png)
+![image-20220103130403988](03_LCD.assets/image-20220103130403988.png)
 
 
 
@@ -397,11 +397,11 @@ platform_device
 
 - framebuffer那边选择的可能是 RGB565的数据格式，LCD屏幕是 RGB888的数据格式，所以LCD控制器内部需要实现把 RGB565的数据格式转换为RGB888的数据格式。
 
-![](03 LCD.assets/image-20220102131539883.png)
+![](03_LCD.assets/image-20220102131539883.png)
 
 
 
-![](03 LCD.assets/image-20220102143947706.png)
+![](03_LCD.assets/image-20220102143947706.png)
 
 - 通过imx6ull和LCD的原理图，可以知道其使用到的引脚为 RGB888和下面的4个引脚和一个PWM引脚。
 
@@ -409,52 +409,52 @@ platform_device
 
 - 选择外设信号，LCDIF控制器，路由所有，会出现有冲突的引脚，然后选择去除掉没有使用的引脚，解决冲突问题
 
-![image-20220103140900003](03 LCD.assets/image-20220103140900003.png)
+![image-20220103140900003](03_LCD.assets/image-20220103140900003.png)
 
 - 解释
 
-![image-20220103141210262](03 LCD.assets/image-20220103141210262.png)
+![image-20220103141210262](03_LCD.assets/image-20220103141210262.png)
 
 
 
 - LCD屏幕的引脚功能如下所示，注意 BL_CN是背光引脚
 
-![image-20220103142553001](03 LCD.assets/image-20220103142553001.png)
+![image-20220103142553001](03_LCD.assets/image-20220103142553001.png)
 
 - 因为背光引脚不是LCD的功能引脚，可以使用任意一个GPIO引脚或者有PWM的功能引脚上，就可以了
 - 在`C:\Users\Administrator\Desktop\imx6ull\02_driver_total\doc_and_source_for_drivers\IMX6ULL\开发板配套资料\原理图\Base_board`目录中的原理图上搜索这个引脚，就可以一直找到其 GPIO 的符号。
 
-![image-20220103142955756](03 LCD.assets/image-20220103142955756.png)
+![image-20220103142955756](03_LCD.assets/image-20220103142955756.png)
 
 - 有些引脚找不到，可以在下面这个路径中查看这个 excel，**这里我直接在原理图就找全了**
 
 - `C:\Users\Administrator\Desktop\imx6ull\02_driver_total\doc_and_source_for_drivers\IMX6ULL\开发板配套资料\原理图\Core_board`
 
-![image-20220103143714541](03 LCD.assets/image-20220103143714541.png)
+![image-20220103143714541](03_LCD.assets/image-20220103143714541.png)
 
 - 注意de引脚
 
-![image-20220103143916619](03 LCD.assets/image-20220103143916619.png)
+![image-20220103143916619](03_LCD.assets/image-20220103143916619.png)
 
 - 背光引脚
 
-![image-20220103144223328](03 LCD.assets/image-20220103144223328.png)
+![image-20220103144223328](03_LCD.assets/image-20220103144223328.png)
 
 
 
 - 设置完成之后，记得要更新源代码
 
-![image-20220103144307812](03 LCD.assets/image-20220103144307812.png)
+![image-20220103144307812](03_LCD.assets/image-20220103144307812.png)
 
 
 
 - 修改设备树1：添加 pinctrl信息
 
-![image-20220103145430412](03 LCD.assets/image-20220103145430412.png)
+![image-20220103145430412](03_LCD.assets/image-20220103145430412.png)
 
 
 
-![image-20220103150108256](03 LCD.assets/image-20220103150108256.png)
+![image-20220103150108256](03_LCD.assets/image-20220103150108256.png)
 
 - 代码中，lcd 中使用 pinctrl 设置的引脚内核自动帮我们解析配置好了，唯一需要我们设置的就是 gpio 引脚
 
@@ -478,7 +478,7 @@ platform_device
 - LCD控制器需要设置2个时钟
 
 
-![image-20220103150500638](03 LCD.assets/image-20220103150500638.png)
+![image-20220103150500638](03_LCD.assets/image-20220103150500638.png)
 
 - 对于时钟的使能，我们可以参考裸机例程，对时钟的寄存器进行 ioremap ，然后直接怼寄存器就可以了
 - 但是我们可以使用内核的时钟子系统，就可以更加方便的使用时钟
@@ -517,14 +517,14 @@ lcdif: lcdif@021c8000 {
 
 - 设备树修改完成如下：
 
-![image-20220103152731809](03 LCD.assets/image-20220103152731809.png)
+![image-20220103152731809](03_LCD.assets/image-20220103152731809.png)
 
 
 
 - 示例代码，还不能直接运行：**可以通过设备树中的名字来获取时钟**
 
 
-![image-20220102151253612](03 LCD.assets/image-20220102151253612.png)
+![image-20220102151253612](03_LCD.assets/image-20220102151253612.png)
 
 * 获得时钟
 
@@ -586,7 +586,7 @@ lcdif: lcdif@021c8000 {
 - display 代表我们要使用哪一个显示器
 - display 中共用的属性，比如总线宽度、bpp 呀这些
 
-![](03 LCD.assets/image-20220102154109603.png)
+![](03_LCD.assets/image-20220102154109603.png)
 
 
 
@@ -595,19 +595,19 @@ lcdif: lcdif@021c8000 {
   - 提取出里面的共用信息
   - 找到里面的 timing 信息
 
-![](03 LCD.assets/image-20220102154330101.png)
+![](03_LCD.assets/image-20220102154330101.png)
 
 
 
 - 设备树参数和数据手册的对应关系（时序参数）
 
-![image-20220103170144504](03 LCD.assets/image-20220103170144504.png)
+![image-20220103170144504](03_LCD.assets/image-20220103170144504.png)
 
 
 
 - 设备树参数和数据手册的对应关系（极性参数）
 
-![](03 LCD.assets/image-20220102155708126.png)
+![](03_LCD.assets/image-20220102155708126.png)
 
 
 
@@ -620,13 +620,13 @@ lcdif: lcdif@021c8000 {
 
 **解析设备树之后的参数值，都保存在 display_timing 结构体中**
 
-![](03 LCD.assets/033_display_timing.png)
+![](03_LCD.assets/033_display_timing.png)
 
 
 
 - 下面这个图表示了解析设备树之后，参数都保存到哪里了
 
-![image-20220103160258628](03 LCD.assets/image-20220103160258628.png)
+![image-20220103160258628](03_LCD.assets/image-20220103160258628.png)
 
 
 
@@ -638,7 +638,7 @@ lcdif: lcdif@021c8000 {
 
   `C:\Users\Administrator\Desktop\imx6ull\02_driver_total\doc_and_source_for_drivers\IMX6ULL\source\03_LCD\05_参考的裸机源码\02_dot_line_circle`
 
-![image-20220103161204146](03 LCD.assets/image-20220103161204146.png)
+![image-20220103161204146](03_LCD.assets/image-20220103161204146.png)
 
 
 
@@ -652,11 +652,11 @@ lcdif: lcdif@021c8000 {
 
   `reg = <0x021c8000 0x4000>;`  查询芯片手册，然后在设备树中指定
 
-![image-20220103164321395](03 LCD.assets/image-20220103164321395.png)
+![image-20220103164321395](03_LCD.assets/image-20220103164321395.png)
 
 ​	如何从设备树中获取LCD的信息
 
-![image-20220103161330426](03 LCD.assets/image-20220103161330426.png)
+![image-20220103161330426](03_LCD.assets/image-20220103161330426.png)
 
 * （2）Framebuffer中数据格式设置
 
@@ -664,7 +664,7 @@ lcdif: lcdif@021c8000 {
 
     第一个寄存器中的 `LCDIF_CTRLn`  这个的设置问题：需要根据 LCD接口的 fb 格式来设置
 
-  ![](03 LCD.assets/image-20220102170236903.png)
+  ![](03_LCD.assets/image-20220102170236903.png)
 
   
 
@@ -672,9 +672,9 @@ lcdif: lcdif@021c8000 {
 
   ​	**注意**：这所说的数据格式，是 `framebuffer` 中的数据存储格式，也就是CPU先写到 `framebuffer` 中的数据。
 
-  ![](03 LCD.assets/image-20220102171544472.png)
+  ![](03_LCD.assets/image-20220102171544472.png)
 
-  ![](03 LCD.assets/image-20220102171918175.png)
+  ![](03_LCD.assets/image-20220102171918175.png)
 
   ​	**对于 24bpp，也就是 RGB 888格式，直接设置为 0111比较好，一个32bit数据保存一组 RGB888的值，最高一字节舍弃不用，如果使用 1111格式，全部字节都是用的话，有些 RGB888数据保存的格式就不对其，有点别扭。**
 
@@ -730,25 +730,25 @@ lcdif: lcdif@021c8000 {
 
 * 解决方法：修改`arch/arm/boot/dts/100ask_imx6ull-14x14.dts`，禁止pwm节点，如下：
 
-![](03 LCD.assets/034_disable_pwm_in_devicetree.png)
+![](03_LCD.assets/034_disable_pwm_in_devicetree.png)
 
 
 
 解决BUG2 （解决）
 
-![image-20220103215744820](03 LCD.assets/image-20220103215744820.png)
+![image-20220103215744820](03_LCD.assets/image-20220103215744820.png)
 
-![image-20220103215717320](03 LCD.assets/image-20220103215717320.png)
+![image-20220103215717320](03_LCD.assets/image-20220103215717320.png)
 
 - 之前漏了 ; 号，看编译报错提示的行号来判断：185行
 
-![image-20220103215944255](03 LCD.assets/image-20220103215944255.png)
+![image-20220103215944255](03_LCD.assets/image-20220103215944255.png)
 
 
 
 解决BUG3 （解决）
 
-![image-20220103220519680](03 LCD.assets/image-20220103220519680.png)
+![image-20220103220519680](03_LCD.assets/image-20220103220519680.png)
 
 原来是之前 删除 /boot 目录中的设备树和zImage的时候，命令搞错了
 
@@ -781,7 +781,7 @@ rm /boot/100askxxx zImage
 ① 怎么把LCD的信息告诉LCD控制器：即分辨率、行列时序、像素时钟等；
 ② 怎么把显存地址、像素格式告诉LCD控制器。
 
-![](03 LCD.assets/014_Lcd_Controller_registers.png)
+![](03_LCD.assets/014_Lcd_Controller_registers.png)
 
 上图是我们将要使用到的寄存器，下面逐个讲解这些寄存器，在后续的LCD控制编程实验会用到。
 
@@ -789,7 +789,7 @@ rm /boot/100askxxx zImage
 
 #### 6.1 LCDIF_CTRL寄存器
 
-![](03 LCD.assets/015_LCDIF_CTRL.png)
+![](03_LCD.assets/015_LCDIF_CTRL.png)
 
 
 
@@ -824,7 +824,7 @@ rm /boot/100askxxx zImage
 
 #### 6.2 LCDIF_CTRL1寄存器
 
-![](03 LCD.assets/016_LCDIF_CTRL1.png)
+![](03_LCD.assets/016_LCDIF_CTRL1.png)
 
 本实验中使用TFT LCD，LCD控制器使用DOTCLK模式。本寄存器中其他用不到的位，就不介绍了。
 
@@ -837,7 +837,7 @@ rm /boot/100askxxx zImage
 
 #### 6.3 LCDIF_TRANSFER_COUNT寄存器
 
-![](03 LCD.assets/017_LCDIF_TRANSFER_COUNT.png)
+![](03_LCD.assets/017_LCDIF_TRANSFER_COUNT.png)
 
 
 
@@ -850,7 +850,7 @@ rm /boot/100askxxx zImage
 
 #### 6.4 LCDIF_VDCTRL0寄存器
 
-![](03 LCD.assets/018_LCDIF_VDCTRL0.png)
+![](03_LCD.assets/018_LCDIF_VDCTRL0.png)
 
 
 
@@ -874,7 +874,7 @@ rm /boot/100askxxx zImage
 
 #### 6.5 LCDIF_VDCTRL1寄存器
 
-![](03 LCD.assets/019_LCDIF_VDCTRL1.png)
+![](03_LCD.assets/019_LCDIF_VDCTRL1.png)
 
 
 
@@ -886,7 +886,7 @@ rm /boot/100askxxx zImage
 
 #### 6.6 LCDIF_VDCTRL2寄存器
 
-![](03 LCD.assets/020_LCDIF_VDCTRL2.png)
+![](03_LCD.assets/020_LCDIF_VDCTRL2.png)
 
 ​	HSYNC_PULSE_WIDTH：水平同步信号脉冲宽度；
 
@@ -901,7 +901,7 @@ rm /boot/100askxxx zImage
 
 #### 6.7 LCDIF_VDCTRL3寄存器
 
-![](03 LCD.assets/021_LCDIF_VDCTRL3.png)
+![](03_LCD.assets/021_LCDIF_VDCTRL3.png)
 
  
 
@@ -916,7 +916,7 @@ rm /boot/100askxxx zImage
 
 #### 6.8 LCDIF_VDCTRL4寄存器
 
-![](03 LCD.assets/022_LCDIF_VDCTRL4.png)
+![](03_LCD.assets/022_LCDIF_VDCTRL4.png)
 
  
 
@@ -930,7 +930,7 @@ rm /boot/100askxxx zImage
 
 #### 6.9 LCDIF_CUR_BUF寄存器
 
-![](03 LCD.assets/023_LCDIF_CUR_BUF.png)
+![](03_LCD.assets/023_LCDIF_CUR_BUF.png)
 
 | 位域   | 名   | 读写 | 描述                                    |
 | ------ | ---- | ---- | --------------------------------------- |
@@ -940,7 +940,7 @@ rm /boot/100askxxx zImage
 
 #### 6.10 LCDIF_NEXT_BUF寄存器
 
-![](03 LCD.assets/024_LCDIF_NEXT_BUF.png)
+![](03_LCD.assets/024_LCDIF_NEXT_BUF.png)
 
 
 
@@ -1077,7 +1077,7 @@ LCD控制器传输完当前帧后，会把LCDIF_NEXT_BUF寄存器的值复制到
 
 ### 7.1 使用**同步模式**下的解释
 
-![image-20211226214422701](03 LCD.assets/image-20211226214422701.png)
+![image-20211226214422701](03_LCD.assets/image-20211226214422701.png)
 
 水平方向：HSYNC、HBP、ACTIVE_WIDTH、HFP
 
@@ -1088,7 +1088,7 @@ LCD控制器传输完当前帧后，会把LCDIF_NEXT_BUF寄存器的值复制到
 
 
 
-![image-20211226214613003](03 LCD.assets/image-20211226214613003.png)
+![image-20211226214613003](03_LCD.assets/image-20211226214613003.png)
 
 垂直方向：VSYNC 、VBP、ACTIVE_HEIGHT、VFP
 
@@ -1101,15 +1101,15 @@ LCD控制器传输完当前帧后，会把LCDIF_NEXT_BUF寄存器的值复制到
 
 
 
-![image-20220103170144504](03 LCD.assets/image-20220103170144504-1646221641151.png)
+![image-20220103170144504](03_LCD.assets/image-20220103170144504-1646221641151.png)
 
 - 两个图对照起来了，之后接上新的LCD的时候，按照这个图一样，参考数据的手册的参数进行设置就行了
 
-![image-20220103191438191](03 LCD.assets/image-20220103191438191.png)
+![image-20220103191438191](03_LCD.assets/image-20220103191438191.png)
 
 
 
-![image-20220103205245559](03 LCD.assets/image-20220103205245559.png)
+![image-20220103205245559](03_LCD.assets/image-20220103205245559.png)
 
 
 
@@ -1119,13 +1119,13 @@ LCD控制器传输完当前帧后，会把LCDIF_NEXT_BUF寄存器的值复制到
 
 （1）
 
-![image-20220103230822495](03 LCD.assets/image-20220103230822495.png)
+![image-20220103230822495](03_LCD.assets/image-20220103230822495.png)
 
-![image-20220103230811837](03 LCD.assets/image-20220103230811837.png)
+![image-20220103230811837](03_LCD.assets/image-20220103230811837.png)
 
 （2）
 
-![image-20220103231636349](03 LCD.assets/image-20220103231636349.png)
+![image-20220103231636349](03_LCD.assets/image-20220103231636349.png)
 
 （3）重新编译zImage和dtbs
 
@@ -1154,7 +1154,7 @@ LCD控制器传输完当前帧后，会把LCDIF_NEXT_BUF寄存器的值复制到
     * LCD控制器继续读取数据，于是LCD上就会显示半屏幕蓝色、半屏幕红色
     * 人眼就会感觉到屏幕闪烁、撕裂
 
-    ![image-20210203172823180](03 LCD.assets/048_singble_buffer.png)
+    ![image-20210203172823180](03_LCD.assets/048_singble_buffer.png)
 
 ### 9.2 使用多Buffer来改进
 
@@ -1174,7 +1174,7 @@ LCD控制器传输完当前帧后，会把LCDIF_NEXT_BUF寄存器的值复制到
 
 流程如下：
 
-![image-20210203180534206](03 LCD.assets/049_drv_app_use_double_buff.png)
+![image-20210203180534206](03_LCD.assets/049_drv_app_use_double_buff.png)
 
 
 
@@ -1201,11 +1201,11 @@ LCD控制器传输完当前帧后，会把LCDIF_NEXT_BUF寄存器的值复制到
   fb_info->var           // 含有单个buffer信息
   ```
 
-  ![image-20220104133727255](03 LCD.assets/image-20220104133727255.png)
+  ![image-20220104133727255](03_LCD.assets/image-20220104133727255.png)
 
 
 
-![image-20220102183809229](03 LCD.assets/image-20220102183809229.png)
+![image-20220102183809229](03_LCD.assets/image-20220102183809229.png)
 
 （1）一般x方向的分辨率 == x方向的虚拟分辨率
 
@@ -1234,11 +1234,11 @@ LCD控制器传输完当前帧后，会把LCDIF_NEXT_BUF寄存器的值复制到
 
 一开始的时候，虚拟分辨率==真实分辨率，并且一开始不允许使用多Buffer，
 
-![image-20220102183924579](03 LCD.assets/image-20220102183924579.png)
+![image-20220102183924579](03_LCD.assets/image-20220102183924579.png)
 
 想要使用 多buffer 的话，还需要做一些事情：set：yres_virtual = yres*n;
 
-![image-20220104141610564](03 LCD.assets/image-20220104141610564.png)
+![image-20220104141610564](03_LCD.assets/image-20220104141610564.png)
 
 这个 n 怎么来的呢？
 
@@ -1248,7 +1248,7 @@ LCD控制器传输完当前帧后，会把LCDIF_NEXT_BUF寄存器的值复制到
 
 然后 `n = smem_len / (xres * yres * bpp / 8)`
 
-![image-20220104141750169](03 LCD.assets/image-20220104141750169.png)
+![image-20220104141750169](03_LCD.assets/image-20220104141750169.png)
 
 APP怎么设置到驱动程序里面去呢？
 
@@ -1258,11 +1258,11 @@ APP怎么设置到驱动程序里面去呢？
 
 前面一开始的时候，驱动程序是不支持多buffer的，想要应用程序这样设置了才支持多个buffer。
 
-![image-20220104134510399](03 LCD.assets/image-20220104134510399.png)
+![image-20220104134510399](03_LCD.assets/image-20220104134510399.png)
 
 （2）执行完前面之后，还需要进行 mmap来映射显存，这些都是在应用程序 APP 中进行的。
 
-![image-20220104143004537](03 LCD.assets/image-20220104143004537.png)
+![image-20220104143004537](03_LCD.assets/image-20220104143004537.png)
 
 
 
@@ -1301,17 +1301,17 @@ APP怎么设置到驱动程序里面去呢？
 
 这个next_buf寄存器什么时候有效的呢，从 vsync信号来了之后，表示一帧数据完成了，
 
-![image-20220104144007160](03 LCD.assets/image-20220104144007160.png)
+![image-20220104144007160](03_LCD.assets/image-20220104144007160.png)
 
 
 
 在驱动程序里面，既设置了这个地址，还等待了这个地址有效
 
-![image-20220104144256883](03 LCD.assets/image-20220104144256883.png)
+![image-20220104144256883](03_LCD.assets/image-20220104144256883.png)
 
 
 
-![image-20220104144438098](03 LCD.assets/image-20220104144438098.png)
+![image-20220104144438098](03_LCD.assets/image-20220104144438098.png)
 
 
 
@@ -1326,7 +1326,7 @@ APP怎么设置到驱动程序里面去呢？
   ```
 
   示例：
-  ![image-20210203180357860](03 LCD.assets/050_mxsfb_pan_display.png)
+  ![image-20210203180357860](03_LCD.assets/050_mxsfb_pan_display.png)
 
 
 
@@ -1347,7 +1347,7 @@ APP怎么设置到驱动程序里面去呢？
 
 （1）驱动程序可以分配1个或者多个buffer，只是分配了这么多个内存空间而已，还没有buffer的概念，这里是显存的概念
 
-![image-20220104144904002](03 LCD.assets/image-20220104144904002.png)
+![image-20220104144904002](03_LCD.assets/image-20220104144904002.png)
 
 （2）驱动需要描述总buffer和单个buffer的信息，都保存在下面
 
@@ -1403,7 +1403,7 @@ echo -e "\033[?25l"  > /dev/tty1
 
 **（3）驱动程序可以支持 13个buffer**
 
-![image-20220104200748756](03 LCD.assets/image-20220104200748756.png)
+![image-20220104200748756](03_LCD.assets/image-20220104200748756.png)
 
 
 

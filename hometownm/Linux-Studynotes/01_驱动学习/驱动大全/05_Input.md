@@ -33,19 +33,19 @@
 有没有一个驱动程序，能支持那么多的设备？没有！
 有没有**一套驱动程序**，容易扩展，最终能支持那么多的设备？有！
 这就是输入子系统的驱动程序，框架如下：
-![image-20210322160103957](../../../imx6ull/02_driver_total/doc_and_source_for_drivers/IMX6ULL/doc_pic/05_Input/pic/05_Input/01_input_driver_block.png)
+![image-20210322160103957](05_Input.assets/01_input_driver_block.png)
 
 
 
 利用下面这一套框架，就可以实现对各种输入设备的适配，其中1、2两部分内核已经帮我们做好了，然后第三部分就由我们自己编写特定的输入设备。
 
-![image-20220105094603469](../../../../AppData/Roaming/Typora/typora-user-images/image-20220105094603469.png)
+![image-20220105094603469](05_Input.assets/image-20220105094603469.png)
 
 
 
 evdev.c 内核中的这个文件比较重要，是输入事件的处理层。
 
-![image-20220105142750237](../../../../AppData/Roaming/Typora/typora-user-images/image-20220105142750237.png)
+![image-20220105142750237](05_Input.assets/image-20220105142750237.png)
 
 ## 1.3  ioctl 应用编程
 
@@ -230,7 +230,7 @@ get event:type = 0x0, code = 0x0, value = 0x0
 
 所以 open文件的时候，要以非阻塞的方式进行。
 
-![image-20220105144626113](../../../../AppData/Roaming/Typora/typora-user-images/image-20220105144626113.png)
+![image-20220105144626113](05_Input.assets/image-20220105144626113.png)
 
 
 
@@ -513,11 +513,11 @@ printf 碰到 \n 的时候，才会把字符串刷到屏幕上输出
 
 input子系统的架构和platform总线设备驱动模型非常的类似，左边是需要我们提供和注册的 input_dev，右边是系统内核已经写好的 input_handler，我们每注册一个 input_dev到链表上，都会与右边的 input_handler一一比较，匹配上了，就会调用  input_handler 里面的 connect 函数。 
 
-![image-20220106095025894](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106095025894.png)
+![image-20220106095025894](05_Input.assets/image-20220106095025894.png)
 
 dev 和 handler 的匹配过程
 
-![image-20220106095447648](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106095447648.png)
+![image-20220106095447648](05_Input.assets/image-20220106095447648.png)
 
 
 
@@ -525,21 +525,21 @@ dev 和 handler 的匹配过程
 
 - 先是注册了一个 字符设备驱动，
 
-![image-20220106095542777](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106095542777.png)
+![image-20220106095542777](05_Input.assets/image-20220106095542777.png)
 
 - 然后之后应用程序调用 read,write这些函数的时候，就可以通过寻找 evdev_fops找到对应的驱动的程序了
 
-![image-20220106095754905](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106095754905.png)
+![image-20220106095754905](05_Input.assets/image-20220106095754905.png)
 
 - 如果是注册 input_handler 的话，也会与左边的 dev 一一进行匹配
 
-![image-20220106095951135](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106095951135.png)
+![image-20220106095951135](05_Input.assets/image-20220106095951135.png)
 
 - connect 函数还会做什么事情：**（建立联系）**
 
   还会把 指向左边input_dev的指针，和右边 input_handler的指针，放进一个称为 input_handle 的结构体中，然后还会把这个  input_handle结构体 放进左边的 input_dev的链表 h_list 以及右边的 input_handler 的链表 h_list 中。
 
-![image-20220106100342346](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106100342346.png)
+![image-20220106100342346](05_Input.assets/image-20220106100342346.png)
 
 - 有了 input_handle结构体 之后，就可以从左边通过这个 handle 找到右边，右边也可以通过这个 handle 找到左边。
 - 并且两边的链表中 h_list 都是可以挂接很多项，所以 当input_dev发生的时候，可以通知 h_list 中的一项或者多项 input_handler ，右边到左边也是。
@@ -548,7 +548,7 @@ dev 和 handler 的匹配过程
 
 
 
-![image-20220106101339784](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106101339784.png)
+![image-20220106101339784](05_Input.assets/image-20220106101339784.png)
 
 
 
@@ -558,17 +558,17 @@ dev 和 handler 的匹配过程
 
 最常用的 handler
 
-![image-20220106101423809](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106101423809.png)
+![image-20220106101423809](05_Input.assets/image-20220106101423809.png)
 
 
 
 ### 2.1 注册一个 input 驱动，系统会做事情
 
-![image-20220106102106262](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106102106262.png)
+![image-20220106102106262](05_Input.assets/image-20220106102106262.png)
 
-![image-20220106102025015](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106102025015.png)
+![image-20220106102025015](05_Input.assets/image-20220106102025015.png)
 
-![image-20220106102038318](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106102038318.png)
+![image-20220106102038318](05_Input.assets/image-20220106102038318.png)
 
 - 注册一个 input_dev，调用 register_dev，里面会把这个 input_dev 挂接到  input_dev_list 链表上，并且会调用 match 函数，与右边的  input_handler_list 链表进行一一对比，如果匹配上的话，就会调用 connect 函数来建立  input_dev 和  input_handler 之间的联系。
 - 匹配成功之后，调用的是  input_handler 里面的 connect 函数，里面会分配一个 evdev 结构体，这个结构体里面就有一项 input_handle 结构体，就是重要的联系  input_dev 和  input_handler 的桥梁。
@@ -586,21 +586,21 @@ dev 和 handler 的匹配过程
 
 - 打开设备
 
-![image-20220106104019321](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106104019321.png)
+![image-20220106104019321](05_Input.assets/image-20220106104019321.png)
 
 - 读数据（阻塞）
 
-![image-20220106104342005](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106104342005.png)
+![image-20220106104342005](05_Input.assets/image-20220106104342005.png)
 
 - 如何上报数据
 
 input_dev会通过h_list链表中的 input_handle找到对应的 input_handler，然后使用 Input_handler里面的函数来上报数据。
 
-![image-20220106104723540](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106104723540.png)
+![image-20220106104723540](05_Input.assets/image-20220106104723540.png)
 
 上面好像写错了，是通过 `input_event` 函数来上报数据。
 
-![image-20220106104920373](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106104920373.png)
+![image-20220106104920373](05_Input.assets/image-20220106104920373.png)
 
 
 
@@ -608,7 +608,7 @@ input_dev会通过h_list链表中的 input_handle找到对应的 input_handler�
 
   
 
-![image-20220106105210614](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106105210614.png)
+![image-20220106105210614](05_Input.assets/image-20220106105210614.png)
 
 
 
@@ -616,19 +616,19 @@ input_dev会通过h_list链表中的 input_handle找到对应的 input_handler�
 
 
 
-![image-20220106105324915](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106105324915.png)
+![image-20220106105324915](05_Input.assets/image-20220106105324915.png)
 
 
 
 上报完数据之后，还会把应用程序唤醒
 
-![image-20220106105535676](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106105535676.png)
+![image-20220106105535676](05_Input.assets/image-20220106105535676.png)
 
 
 
 ### 2.3 驱动开发者需要做什么
 
-![image-20220106105634167](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106105634167.png)
+![image-20220106105634167](05_Input.assets/image-20220106105634167.png)
 
 
 
@@ -636,7 +636,7 @@ input_dev会通过h_list链表中的 input_handle找到对应的 input_handler�
 
 
 
-![image-20220106105821388](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106105821388.png)
+![image-20220106105821388](05_Input.assets/image-20220106105821388.png)
 
 
 
@@ -646,17 +646,17 @@ input_dev会通过h_list链表中的 input_handle找到对应的 input_handler�
 
 ## 3 编写input_dev驱动框架
 
-![image-20220106110158211](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106110158211.png)
+![image-20220106110158211](05_Input.assets/image-20220106110158211.png)
 
 ### 3.1 编写 input_dev 的框架
 
 方法1：直接编写一个 .c 驱动文件，在入口函数中，直接分配、设置、注册这个 input_dev 结构体
 
-![image-20220106110431666](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106110431666.png)
+![image-20220106110431666](05_Input.assets/image-20220106110431666.png)
 
 方法2：使用总线设备驱动模型，在 probe 函数中进行分配、设置、注册这个 input_dev 结构体
 
-![image-20220106110648760](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106110648760.png)
+![image-20220106110648760](05_Input.assets/image-20220106110648760.png)
 
 
 
@@ -799,7 +799,7 @@ void input_set_abs_params(struct input_dev *dev, unsigned int axis,
 
 input.c文件中，有 4个设置的函数
 
-![image-20220106120222576](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106120222576.png)
+![image-20220106120222576](05_Input.assets/image-20220106120222576.png)
 
 
 
@@ -827,23 +827,23 @@ input.c文件中，有 4个设置的函数
 
 驱动程序中需要设备这个属性
 
-![image-20220106143245180](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106143245180.png)
+![image-20220106143245180](05_Input.assets/image-20220106143245180.png)
 
 
 
 ## 4 分析内核自带的GPIO按键驱动
 
-![image-20220106143810307](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106143810307.png)
+![image-20220106143810307](05_Input.assets/image-20220106143810307.png)
 
 
 
-![image-20220106143947093](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106143947093.png)
+![image-20220106143947093](05_Input.assets/image-20220106143947093.png)
 
 
 
 
 
-![image-20220106144423541](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106144423541.png)
+![image-20220106144423541](05_Input.assets/image-20220106144423541.png)
 
 ### 4.1 指定设备树
 
@@ -851,35 +851,35 @@ input.c文件中，有 4个设置的函数
 
 如下图所示，A，B（B1，B2）这些都是要指定的。
 
-![image-20220106144554738](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106144554738.png)
+![image-20220106144554738](05_Input.assets/image-20220106144554738.png)
 
 
 
 ### 4.2 对比两款板子的输入事件设备树
 
-![image-20220106145145160](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106145145160.png)
+![image-20220106145145160](05_Input.assets/image-20220106145145160.png)
 
 ### 4.3 分析gpio-key.c驱动程序
 
 在 probe 函数中，会解析设备树，得到硬件信息。
 
-![image-20220106145641591](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106145641591.png)
+![image-20220106145641591](05_Input.assets/image-20220106145641591.png)
 
-![image-20220106145511854](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106145511854.png)
+![image-20220106145511854](05_Input.assets/image-20220106145511854.png)
 
 根据设备树的设置值，对驱动中申请的 input_dev 进行设置
 
-![image-20220106150012536](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106150012536.png)
+![image-20220106150012536](05_Input.assets/image-20220106150012536.png)
 
 
 
-![image-20220106150702469](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106150702469.png)
+![image-20220106150702469](05_Input.assets/image-20220106150702469.png)
 
 
 
 ### 4.4 消抖
 
-![image-20220106151016052](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106151016052.png)
+![image-20220106151016052](05_Input.assets/image-20220106151016052.png)
 
 
 
@@ -893,7 +893,7 @@ input.c文件中，有 4个设置的函数
 ls /dev/input
 ```
 
-![image-20220106151431994](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106151431994.png)
+![image-20220106151431994](05_Input.assets/image-20220106151431994.png)
 
 
 
@@ -921,7 +921,7 @@ cat /proc/bus/input/devices
 
 
 
-![image-20220106214701098](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106214701098.png)
+![image-20220106214701098](05_Input.assets/image-20220106214701098.png)
 
 那么这里的I、N、P、S、U、H、B对应的每一行是什么含义呢？
 
@@ -929,7 +929,7 @@ cat /proc/bus/input/devices
 
 该参数由结构体struct input_id来进行描述，驱动程序中会定义这样的结构体：
 
-​       ![image-20220106214749855](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106214749855.png)                        
+​       ![image-20220106214749855](05_Input.assets/image-20220106214749855.png)                        
 
 **② N:name of the device**
 
@@ -975,7 +975,7 @@ cat /proc/bus/input/devices
 
 `hexdump /dev/input/event0`
 
-![image-20220106215107337](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106215107337.png)
+![image-20220106215107337](05_Input.assets/image-20220106215107337.png)
 
 
 
@@ -997,7 +997,7 @@ cat /proc/bus/input/devices
 
 
 
-![image-20210331151038656](file://C:/Users/Administrator/Desktop/imx6ull/02_driver_total/doc_and_source_for_drivers/IMX6ULL/doc_pic/05_Input/pic/05_Input/18_i2c_input_block.png?lastModify=1642473881)
+![](05_Input.assets/18_i2c_input_block.png)
 
 
 
@@ -1021,7 +1021,7 @@ make
 make install DESTDIR=$PWD/tmp
 ```
 
-![image-20220106173128971](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106173128971.png)
+![image-20220106173128971](05_Input.assets/image-20220106173128971.png)
 
 （2）复制头文件/库到工具链(非必须, 编译其他APP时需要)
 
@@ -1032,7 +1032,7 @@ make install DESTDIR=$PWD/tmp
 echo 'main(){}'| arm-buildroot-linux-gnueabihf -E -v -
 ```
 
-![image-20220106173947167](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106173947167.png)
+![image-20220106173947167](05_Input.assets/image-20220106173947167.png)
 
 ```c
 /home/book/myDoc/100ask_imx6ull-sdk/ToolChain/arm-buildroot-linux-gnueabihf_sdk-buildroot/arm-buildroot-linux-gnueabihf/sysroot/usr/include
@@ -1046,7 +1046,7 @@ cp include/* /home/book/myDoc/100ask_imx6ull-sdk/ToolChain/arm-buildroot-linux-g
 
 
 
-![image-20220106174105865](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106174105865.png)
+![image-20220106174105865](05_Input.assets/image-20220106174105865.png)
 
 ```c
 /home/book/myDoc/100ask_imx6ull-sdk/ToolChain/arm-buildroot-linux-gnueabihf_sdk-buildroot/arm-buildroot-linux-gnueabihf/sysroot/usr/lib/
@@ -1060,11 +1060,11 @@ cp lib/*so* -d /home/book/myDoc/100ask_imx6ull-sdk/ToolChain/arm-buildroot-linux
 
 （3）拷贝 tmp 中的测试程序和 lib 文件到单板上
 
-![image-20220106174446269](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106174446269.png)
+![image-20220106174446269](05_Input.assets/image-20220106174446269.png)
 
 参考下面需要拷贝的东西，**把库文件放到单板上：运行程序要用**
 
-![image-20220106174907184](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106174907184.png)
+![image-20220106174907184](05_Input.assets/image-20220106174907184.png)
 
 ```c
 // 在ubuntu 中，拷贝到 nfs 目录中
@@ -1080,7 +1080,7 @@ cp ts.conf -d /etc
 
 （4）移除掉 lvgl 和 qt 的应用程序
 
-![image-20220106212601082](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106212601082.png)
+![image-20220106212601082](05_Input.assets/image-20220106212601082.png)
 
 
 
@@ -1114,13 +1114,13 @@ export TSLIB_FBDEVICE=/dev/fb0
 
 tslib的主要代码如下：
 
-​               ![image-20220107095028217](../../../../AppData/Roaming/Typora/typora-user-images/image-20220107095028217.png)                
+​               ![image-20220107095028217](05_Input.assets/image-20220107095028217.png)                
 
 核心在于“plugins”目录里的“插件”，或称为“module”，可以称为动态库，可以在使用的时候再调用。这个目录下的每个文件都是一个module，每个module都提供2个函数：read、read_mt，前者用于读取单点触摸屏的数据，后者用于读取多点触摸屏的数据。
 
 **注意**：“plugins”目录里的“插件”，每个module 中的 read、read_mt 都是递归调用的，所以最终的情况就是串联起来依次处理数据。
 
-![image-20220107095229655](../../../../AppData/Roaming/Typora/typora-user-images/image-20220107095229655.png)
+![image-20220107095229655](05_Input.assets/image-20220107095229655.png)
 
 ​        有了tsdev的list和list_raw这个链表，分析 ts_read和ts_read_mt就简单了，肯定是先调用 input模块处理，然后再到 pthres模块处理，然后再到dejitter模块处理，再到linear模块处理，最后再返回给应用程序。
 
@@ -1128,7 +1128,7 @@ tslib的主要代码如下：
 
 
 
-![image-20220107100051201](../../../../AppData/Roaming/Typora/typora-user-images/image-20220107100051201.png)
+![image-20220107100051201](05_Input.assets/image-20220107100051201.png)
 
 
 
@@ -1138,7 +1138,7 @@ tslib的主要代码如下：
 
 
 
-![image-20220107104314532](../../../../AppData/Roaming/Typora/typora-user-images/image-20220107104314532.png)
+![image-20220107104314532](05_Input.assets/image-20220107104314532.png)
 
 
 
@@ -1200,7 +1200,7 @@ while(1)
 
 （3）比如3个触摸点，当移开第2个触点时，剩下的两个触点又会变成数组 `samp_mt【】【】`中的前2个 
 
-![image-20220107112942316](../../../../AppData/Roaming/Typora/typora-user-images/image-20220107112942316.png)
+![image-20220107112942316](05_Input.assets/image-20220107112942316.png)
 
 
 
@@ -1210,13 +1210,13 @@ while(1)
 
 
 
-![image-20220106153504871](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106153504871.png)
+![image-20220106153504871](05_Input.assets/image-20220106153504871.png)
 
 它的数据来源不是来自于硬件，而是来自于应用程序输入的数据
 
 
 
-![image-20220106153836909](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106153836909.png)
+![image-20220106153836909](05_Input.assets/image-20220106153836909.png)
 
 
 
@@ -1224,13 +1224,13 @@ while(1)
 
 
 
-![image-20220118110254587](05 Input.assets/image-20220118110254587.png)
+![image-20220118110254587](05_Input.assets/image-20220118110254587.png)
 
 
 
 
 
-![image-20220118111311314](05 Input.assets/image-20220118111311314.png)
+![image-20220118111311314](05_Input.assets/image-20220118111311314.png)
 
 
 
@@ -1260,7 +1260,7 @@ while(1)
 
 （2）根据地址在设备树中搜索，看哪些节点使用到了这个地址，I2C设备节点都是在节点后面 @ 地址
 
-![image-20220106165011160](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106165011160.png)
+![image-20220106165011160](05_Input.assets/image-20220106165011160.png)
 
 （3）找到触摸芯片之后，就可以搜索 linux内核 中是否有这个芯片的驱动
 
@@ -1276,7 +1276,7 @@ while(1)
 
 如果是出现 xy方向反转之类的，就可以 查看下面这个路径中的绑定文档，看其内核支持的触摸屏的型号和设备树的编写过程。
 
-![image-20220106164323070](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106164323070.png)
+![image-20220106164323070](05_Input.assets/image-20220106164323070.png)
 
 
 
@@ -1302,7 +1302,7 @@ iface eth0 inet static
     gateway 192.168.5.1
 ```
 
-![image-20220106174608247](../../../../AppData/Roaming/Typora/typora-user-images/image-20220106174608247.png)
+![image-20220106174608247](05_Input.assets/image-20220106174608247.png)
 
 
 
