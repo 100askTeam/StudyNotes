@@ -25,9 +25,10 @@
       - ![07_linux启动流程.drawio.png](http://studynotes.100ask.net/hometownm/Linux-Studynotes/01_驱动学习/流程图/07_linux启动流程.drawio.png)
       - ![08_链接地址和位置无关码.drawio.png](http://studynotes.100ask.net/hometownm/Linux-Studynotes/01_驱动学习/流程图/08_链接地址和位置无关码.drawio.png)
       - ![09_应用程序-驱动程序.drawio.png](http://studynotes.100ask.net/hometownm/Linux-Studynotes/01_驱动学习/流程图/09_应用程序-驱动程序.drawio.png)
-      - [Linux中断框图.emmx](hometownm/Linux-Studynotes/01_驱动学习/流程图/Linux中断框图.emmx)
+      - [Linux中断框图.emmx](http://studynotes.100ask.net/hometownm/Linux-Studynotes/01_驱动学习/流程图/Linux中断框图.emmx)
+      
     - 驱动大全
-      - [03_LCD.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/03_LCD.md)
+      - [03_LCD.md](http://studynotes.100ask.net/hometownm/Linux-Studynotes/01_驱动学习/驱动大全/03_LCD.md)
       - [04_IIC.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/04_IIC.md)
       - [05_Input.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/05_Input.md)
       - [06_Pinctrl.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/06_Pinctrl.md)
@@ -40,7 +41,7 @@
    
 - RTOS-Studynotes
   - [01_4小时中度掌握FreeRTOS.md](hometownm/RTOS-Studynotes/01_4小时中度掌握FreeRTOS.md)
-  - [02_RTT直播_2021_12_11.pptx](hometownm/RTOS-Studynotes/02_RTT直播_2021_12_11.pptx)
+  - [02_RTT直播_2021_12_11.pptx](http://studynotes.100ask.net/hometownm/RTOS-Studynotes/02_RTT直播_2021_12_11.pptx)
   - [03_深入学习双系统双架构.md](hometownm/RTOS-Studynotes/03_深入学习双系统双架构.md)
   
   - 程序框架图
