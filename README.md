@@ -16,16 +16,16 @@
       - 荔枝派Zero
         - [荔枝派zero.md](hometownm/Linux-Studynotes/01_驱动学习/全志Linux芯片/荔枝派Zero/荔枝派zero.md)
     - 流程图
-      - [01_互ping示意图.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/01_互ping示意图.drawio.png)
-      - [02_EMMC与boot目录内容的关系.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/02_EMMC与boot目录内容的关系.drawio.png)
-      - [03_platform_device设备模型.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/03_platform_device设备模型.drawio.png)
-      - [04_I2C系统.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/04_I2C系统.drawio.png)
-      - [05_SPI编程思路.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/05_SPI编程思路.drawio.png)
-      - [06_imx6ull外部资源.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/06_imx6ull外部资源.drawio.png)
-      - [07_linux启动流程.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/07_linux启动流程.drawio.png)
-      - [08_链接地址和位置无关码.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/08_链接地址和位置无关码.drawio.png)
-      - [09_应用程序-驱动程序.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/09_应用程序-驱动程序.drawio.png)
-      - [Linux中断框图.emmx](hometownm/Linux-Studynotes/01_驱动学习/流程图/Linux中断框图.emmx)
+      - ![01_互ping示意图.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/01_互ping示意图.drawio.png)
+      - ![02_EMMC与boot目录内容的关系.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/02_EMMC与boot目录内容的关系.drawio.png)
+      - ![03_platform_device设备模型.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/03_platform_device设备模型.drawio.png)
+      - ![04_I2C系统.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/04_I2C系统.drawio.png)
+      - ![05_SPI编程思路.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/05_SPI编程思路.drawio.png)
+      - ![06_imx6ull外部资源.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/06_imx6ull外部资源.drawio.png)
+      - ![07_linux启动流程.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/07_linux启动流程.drawio.png)
+      - ![08_链接地址和位置无关码.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/08_链接地址和位置无关码.drawio.png)
+      - ![09_应用程序-驱动程序.drawio.png](hometownm/Linux-Studynotes/01_驱动学习/流程图/09_应用程序-驱动程序.drawio.png)
+      - ![Linux中断框图.emmx](hometownm/Linux-Studynotes/01_驱动学习/流程图/Linux中断框图.emmx)
     - 驱动大全  
   - 02_应用学习
     - [Linux应用编程代码.md](hometownm/Linux-Studynotes/02_应用学习/Linux应用编程代码.md)
@@ -33,12 +33,10 @@
     - [视频监控项目.md](hometownm/Linux-Studynotes/02_应用学习/视频监控项目.md)
     - [量产工具文档.md](hometownm/Linux-Studynotes/02_应用学习/量产工具文档.md)
 - RTOS-Studynotes
-  - [01_4小时中度掌握FreeRTOS.docx](hometownm/RTOS-Studynotes/01_4小时中度掌握FreeRTOS.docx)
   - [01_4小时中度掌握FreeRTOS.md](hometownm/RTOS-Studynotes/01_4小时中度掌握FreeRTOS.md)
   - [02_RTT直播_2021_12_11.pptx](hometownm/RTOS-Studynotes/02_RTT直播_2021_12_11.pptx)
-  - [03_深入学习双系统双架构.docx](hometownm/RTOS-Studynotes/03_深入学习双系统双架构.docx)
   - [03_深入学习双系统双架构.md](hometownm/RTOS-Studynotes/03_深入学习双系统双架构.md)
   - 程序框架图
-    - [01_Hal库智能家居——输入系统.drawio.png](hometownm/RTOS-Studynotes/程序框架图/01_Hal库智能家居——输入系统.drawio.png)
-    - [02_Hal库智能家居——LED设备.drawio.png](hometownm/RTOS-Studynotes/程序框架图/02_Hal库智能家居——LED设备.drawio.png)
-    - [03_Hal库智能家居——OLED设备.drawio.png](hometownm/RTOS-Studynotes/程序框架图/03_Hal库智能家居——OLED设备.drawio.png)
+    - ![01_Hal库智能家居——输入系统.drawio.png](hometownm/RTOS-Studynotes/程序框架图/01_Hal库智能家居——输入系统.drawio.png)
+    - ![02_Hal库智能家居——LED设备.drawio.png](hometownm/RTOS-Studynotes/程序框架图/02_Hal库智能家居——LED设备.drawio.png)
+    - ![03_Hal库智能家居——OLED设备.drawio.png](hometownm/RTOS-Studynotes/程序框架图/03_Hal库智能家居——OLED设备.drawio.png)
