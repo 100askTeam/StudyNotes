@@ -28,9 +28,17 @@
 	    - [Linux中断框图.emmx](hometownm/Linux-Studynotes/01_驱动学习/流程图/Linux中断框图.emmx)
     - 驱动大全   
   - 02_应用学习
+    - [Linux应用编程代码.md](hometownm/Linux-Studynotes/02_应用学习/Linux应用编程代码.md)
+    - [视频监控重要章节记录.md](hometownm/Linux-Studynotes/02_应用学习/视频监控重要章节记录.md)
+    - [视频监控项目.md](hometownm/Linux-Studynotes/02_应用学习/视频监控项目.md)
+    - [量产工具文档.md](hometownm/Linux-Studynotes/02_应用学习/量产工具文档.md)
 - RTOS-Studynotes
-  - 01_4小时中度掌握FreeRTOS.md
-  - 02_RTT直播_2021_12_11.pptx
-  - 03_深入学习双系统双架构.md
+  - [01_4小时中度掌握FreeRTOS.docx](hometownm/RTOS-Studynotes/01_4小时中度掌握FreeRTOS.docx)
+  - [01_4小时中度掌握FreeRTOS.md](hometownm/RTOS-Studynotes/01_4小时中度掌握FreeRTOS.md)
+  - [02_RTT直播_2021_12_11.pptx](hometownm/RTOS-Studynotes/02_RTT直播_2021_12_11.pptx)
+  - [03_深入学习双系统双架构.docx](hometownm/RTOS-Studynotes/03_深入学习双系统双架构.docx)
+  - [03_深入学习双系统双架构.md](hometownm/RTOS-Studynotes/03_深入学习双系统双架构.md)
   - 程序框架图
-    - 程序框架图
+    - [01_Hal库智能家居——输入系统.drawio.png](hometownm/RTOS-Studynotes/程序框架图/01_Hal库智能家居——输入系统.drawio.png)
+    - [02_Hal库智能家居——LED设备.drawio.png](hometownm/RTOS-Studynotes/程序框架图/02_Hal库智能家居——LED设备.drawio.png)
+    - [03_Hal库智能家居——OLED设备.drawio.png](hometownm/RTOS-Studynotes/程序框架图/03_Hal库智能家居——OLED设备.drawio.png)
