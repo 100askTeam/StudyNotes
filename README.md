@@ -1,2 +1,33 @@
-# StudyNotes
-Excellent student embedded development study notes.
+**优秀学员-嵌入式开发学习笔记汇总**
+- [黎宇恒同学笔记](hometownm/README.md)
+  - 黎宇恒同学所有笔记均存放在 `hometownm`文件夹下。
+----
+
+# 黎宇恒学习笔记列表
+- Linux-Studynotes
+  - 01_驱动学习
+    - imx6ull
+      - [100ask_imx6ull_pro环境配置.md](hometownm/Linux-Studynotes/01_驱动学习/imx6ull/100ask_imx6ull_pro环境配置.md)
+      - [Linux内核启动流程.md](hometownm/Linux-Studynotes/01_驱动学习/imx6ull/Linux内核启动流程.md)
+    - 全志Linux芯片
+      - 荔枝派Nano
+        - [荔枝派Nano.md](hometownm/Linux-Studynotes/01_驱动学习/全志Linux芯片/荔枝派Nano/荔枝派Nano.md)
+      - 荔枝派Zero
+        - [荔枝派zero.md](hometownm/Linux-Studynotes/01_驱动学习/全志Linux芯片/荔枝派Zero/荔枝派zero.md)
+    - 驱动大全
+      - [LCD.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/03_LCD.md)
+      - [IIC.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/04_IIC.md)
+      - [Input.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/05_Input.md)
+      - [Pinctrl.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/06_Pinctrl.md)
+      - [Interrupt.md](hometownm/Linux-Studynotes/01_驱动学习/驱动大全/08_Interrupt.md)	  
+    - 流程图:请访问 [Github仓库查看](https://github.com/100askTeam/StudyNotes/tree/main/hometownm/Linux-Studynotes/01_%E9%A9%B1%E5%8A%A8%E5%AD%A6%E4%B9%A0/%E6%B5%81%E7%A8%8B%E5%9B%BE)
+  - 02_应用学习
+    - [Linux应用编程代码.md](hometownm/Linux-Studynotes/02_应用学习/Linux应用编程代码.md)
+    - [视频监控重要章节记录.md](hometownm/Linux-Studynotes/02_应用学习/视频监控重要章节记录.md)
+    - [视频监控项目.md](hometownm/Linux-Studynotes/02_应用学习/视频监控项目.md)
+    - [量产工具文档.md](hometownm/Linux-Studynotes/02_应用学习/量产工具文档.md)
+- RTOS-Studynotes
+  - [01_4小时中度掌握FreeRTOS.md](hometownm/RTOS-Studynotes/01_4小时中度掌握FreeRTOS.md)
+  - [02_RTT直播_2021_12_11.pptx](hometownm/RTOS-Studynotes/02_RTT直播_2021_12_11.pptx)
+  - [深入学习双系统双架构.md](hometownm/RTOS-Studynotes/03_深入学习双系统双架构.md)
+  - 程序框架图: 请访问 [Github仓库查看](https://github.com/100askTeam/StudyNotes/tree/main/hometownm/RTOS-Studynotes/%E7%A8%8B%E5%BA%8F%E6%A1%86%E6%9E%B6%E5%9B%BE)
