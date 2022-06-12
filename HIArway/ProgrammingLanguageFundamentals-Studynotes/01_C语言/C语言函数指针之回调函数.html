@@ -1,0 +1,112 @@
+<html>
+<head>
+  <title>C语言函数指针之回调函数</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/605138 (zh-CN, DDL); Windows/10.0.0 (Win64); EDAMVersion=V2;"/>
+  <meta name="content-class" content="yinxiang.superNote"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+<body>
+<a name="4450"/>
+<h1>C语言函数指针之回调函数</h1>
+<div>
+<table bgcolor="#D4DDE5" border="0">
+<tr><td><b>创建时间：</b></td><td><i>2022/4/27 12:02</i></td></tr>
+<tr><td><b>更新时间：</b></td><td><i>2022/4/27 14:55</i></td></tr>
+<tr><td><b>作者：</b></td><td><i>gi51wa2j</i></td></tr>
+<tr><td><b>标签：</b></td><td><i>bingo, C, 细节知识</i></td></tr>
+</table>
+</div>
+<br/>
+
+<div><span><div>原文链接：<a href="https://xie.infoq.cn/article/67bea8d327b573a9c7112a953" rev="en_rl_none">https://xie.infoq.cn/article/67bea8d327b573a9c7112a953</a></div><h1>1.概念介绍</h1><div>我的理解是：把一段可执行的代码像参数传递那样传给其他代码，而这段代码会在某个时刻被调用执行，这就叫做<span style="font-weight: 400;">回调</span>。</div><p style="text-align:start;">如果代码立即被执行就称为<span style="font-weight: 400;">同步回调</span>，如果过后再执行，则称之为<span style="font-weight: 400;">异步回调</span>。</p><p style="text-align:start;"><span style="font-weight: 400;">回调函数</span>就是一个通过函数指针调用的函数。如果你把函数的指针（地址）作为参数传递给另一个函数，当这个指针被用来调用其所指向的函数时，我们就说这是回调函数。</p><p style="text-align:start;">回调函数不是由该函数的实现方直接调用，而是在特定的事件或条件发生时由另外的一方调用的，用于对该事件或条件进行响应。</p><h1>2.为什么需要回调函数</h1><div>因为可以把调用者与被调用者分开，所以调用者不关心谁是被调用者。它只需知道存在一个具有特定原型和限制条件的被调用函数。</div><p style="text-align:start;">简而言之，回调函数就是允许用户把需要调用的方法的指针作为参数传递给一个函数，以便该函数在处理相似事件的时候可以灵活的使用不同的方法。</p><img src="C语言函数指针之回调函数_files/Image.png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">
+int Callback()    ///&lt; 回调函数
+{
+    // TODO
+    return 0;
+}
+int main()     ///&lt;  主函数
+{
+    // TODO
+    Library(Callback);  ///&lt; 库函数通过函数指针进行回调
+    // TODO
+    return 0;
+}</div><div style="text-align:start;">回调似乎只是函数间的调用，和普通函数调用没啥区别。</div><p style="text-align:start;">但仔细看，可以发现两者之间的一个关键的不同：在回调中，主程序把回调函数像参数一样传入库函数。</p><p style="text-align:start;">这样一来，只要我们改变传进库函数的参数，就可以实现不同的功能，这样有没有觉得很灵活？并且当库函数很复杂或者不可见的时候利用回调函数就显得十分优秀。</p><h1>3.如何使用回调函数</h1><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">
+int Callback_1(int a)   ///&lt; 回调函数1
+{
+    printf(&quot;Hello, this is Callback_1: a = %d &quot;, a);
+    return 0;
+}
+
+int Callback_2(int b)  ///&lt; 回调函数2
+{
+    printf(&quot;Hello, this is Callback_2: b = %d &quot;, b);
+    return 0;
+}
+
+int Callback_3(int c)   ///&lt; 回调函数3
+{
+    printf(&quot;Hello, this is Callback_3: c = %d &quot;, c);
+    return 0;
+}
+
+int Handle(int x, int (*Callback)(int)) ///&lt; 注意这里用到的函数指针定义
+{
+    Callback(x);
+}
+
+int main()
+{
+    Handle(4, Callback_1);
+    Handle(5, Callback_2);
+    Handle(6, Callback_3);
+    return 0;
+}</div><div>如上述代码：可以看到，<code style="-en-code: true"><span style="font-weight: 400;">Handle()</span></code>函数里面的参数是一个指针，在<code style="-en-code: true"><span style="font-weight: 400;">main()</span></code>函数里调用<code style="-en-code: true"><span style="font-weight: 400;">Handle()</span></code>函数的时候，给它传入了函数<code style="-en-code: true"><span style="font-weight: 400;">Callback_1()/Callback_2()/Callback_3()</span></code>的函数名，这时候的函数名就是对应函数的指针，也就是说，回调函数其实就是函数指针的一种用法。</div><h1>4.回调函数使用示例（ ）</h1><div>一个<code style="-en-code: true">GPRS</code>模块联网的小项目，使用过的同学大概知道<code style="-en-code: true">2G、4G、NB</code>等模块要想实现无线联网功能都需要经历模块上电初始化、注册网络、查询网络信息质量、连接服务器等步骤，这里的的例子就是，利用一个状态机函数（根据不同状态依次调用不同实现方法的函数），通过回调函数的方式依次调用不同的函数，实现模块联网功能，如下：</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">
+/*********  工作状态处理  *********/
+typedef struct
+{
+ uint8_t mStatus;
+ uint8_t (* Funtion)(void); //函数指针的形式
+} M26_WorkStatus_TypeDef;  //M26的工作状态集合调用函数
+
+
+/**********************************************
+** &gt;M26工作状态集合函数
+***********************************************/
+M26_WorkStatus_TypeDef M26_WorkStatus_Tab[] =
+{    
+    {GPRS_NETWORK_CLOSE,  M26_PWRKEY_Off  }, //模块关机
+    {GPRS_NETWORK_OPEN,  M26_PWRKEY_On  }, //模块开机
+    {GPRS_NETWORK_Start,   M26_Work_Init  }, //管脚初始化
+    {GPRS_NETWORK_CONF,  M26_NET_Config  }, /AT指令配置
+    {GPRS_NETWORK_LINK_CTC,  M26_LINK_CTC  }, //连接调度中心  
+    {GPRS_NETWORK_WAIT_CTC, M26_WAIT_CTC  },  //等待调度中心回复 
+    {GPRS_NETWORK_LINK_FEM, M26_LINK_FEM  }, //连接前置机
+    {GPRS_NETWORK_WAIT_FEM, M26_WAIT_FEM  }, //等待前置机回复
+    {GPRS_NETWORK_COMM,  M26_COMM   }, //正常工作    
+    {GPRS_NETWORK_WAIT_Sig,  M26_WAIT_Sig  },  //等待信号回复
+    {GPRS_NETWORK_GetSignal,  M26_GetSignal  }, //获取信号值
+    {GPRS_NETWORK_RESTART,  M26_RESET   }, //模块重启
+}
+/**********************************************
+** &gt;M26模块工作状态机，依次调用里面的12个函数   
+***********************************************/
+uint8_t M26_WorkStatus_Call(uint8_t Start)
+{
+    uint8_t i = 0;
+    for(i = 0; i &lt; 12; i++)
+    {
+        if(Start == M26_WorkStatus_Tab[i].mStatus)
+        {          
+      return M26_WorkStatus_Tab[i].Funtion();
+        }
+    }
+    return 0;
+}</div><div>所以，如果有人想做个<code style="-en-code: true">NB</code>模块联网项目，可以<code style="-en-code: true">copy</code>上面的框架，只需要修改回调函数内部的具体实现，或者增加、减少回调函数，就可以很简洁快速的实现模块联网。</div></span>
+</div></body></html> 

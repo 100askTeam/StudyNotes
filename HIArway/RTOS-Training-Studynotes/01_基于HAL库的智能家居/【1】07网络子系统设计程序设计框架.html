@@ -1,0 +1,261 @@
+<html>
+<head>
+  <title>【1】07网络子系统设计|程序设计框架</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/605138 (zh-CN, DDL); Windows/10.0.0 (Win64); EDAMVersion=V2;"/>
+  <meta name="content-class" content="yinxiang.superNote"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+<body>
+<a name="3561"/>
+<h1>【1】07网络子系统设计|程序设计框架</h1>
+<div>
+<table bgcolor="#D4DDE5" border="0">
+<tr><td><b>创建时间：</b></td><td><i>2022/3/1 16:15</i></td></tr>
+<tr><td><b>更新时间：</b></td><td><i>2022/4/28 18:17</i></td></tr>
+<tr><td><b>作者：</b></td><td><i>gi51wa2j</i></td></tr>
+<tr><td><b>标签：</b></td><td><i>bingo, RTOS训练营, 基于HAL的智能家居, 正文</i></td></tr>
+</table>
+</div>
+<br/>
+
+<div><span><h1>1.网络系统_设计思路与结构体</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\
+			10_19_net_struct</div><h2>1.1 程序总体框架</h2><img src="【1】07网络子系统设计程序设计框架_files/02_software_block.png" type="image/png" data-filename="02_software_block.png" style="--en-uploadstate:uploaded;"/><h2>1.2 网络系统层次</h2><div><span style="font-size: 14pt;">将网卡设备融入输入子系统中</span></div><div><br/></div><img src="【1】07网络子系统设计程序设计框架_files/23_net_layer.png" type="image/png" data-filename="23_net_layer.png" style="--en-uploadstate:uploaded;"/><img src="【1】07网络子系统设计程序设计框架_files/Image.png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h2>1.3 怎么得出这些层次？</h2><p style="text-align:start;">看视频。</p><p style="text-align:start;"><br/></p><h2>1.4 抽象网卡设备的结构体</h2><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">typedef struct NetDevice{
+	char *name;        //根据名字来选择不同的网卡
+	char ip[4];
+	char mac[6];
+	int (*Init)(struct NetDevice *ptDev);
+	int (*Connect)(struct NetDevice *ptdev, char *SSID, char *password);
+	void (*Disconnect)(struct NetDevice *ptdev);
+	/*数据传输三要素:source, dest, data*/
+	/*Type选择TCP传输还是UDP传输*/
+	int (*Send)(struct NetDevice *ptDev, char *Type, char *pDestIP, int iDestPort, unsigned char *Data, int iLen);
+	/*接收时，使用iLocalPort来选择监听的端口，使用pSrcIP来保持源头的IP值*/
+	int (*Recv)(struct NetDevice *ptDev, char *Type, int iLocalPort, cahr *pSrcIP, unsigned char *Data, int iLen, int TimeoutMS);
+}NetDevice,*PNetDevice;
+</div><h1>2.网络系统_ESP8266模块编程</h1><p style="text-align:start;">参考资料：</p><ul><li><p>AT指令</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\00_基础资源资料\
+	1_STM32F103\3_硬件资料\4_ESP8266-01S模块资料\01_技术手册\01_乐鑫(espressif)\
+		ESP8266 Non-OS AT 指令使用示例_V1.3.pdf</div><div><br/></div><ul><li><p>操作视频</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">09-7_2-1.AT指令应用示例_UDP 传输_固定远端的 UDP 通信
+09-7_2-2.AT指令应用示例_远端可变的 UDP 通信</div><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\
+			10_20_net_esp8266</div><h2>2.1 AT指令练习</h2><p style="text-align:start;">如下图接好ESP8266模块：</p><img src="【1】07网络子系统设计程序设计框架_files/24_esp8266_connect.png" type="image/png" data-filename="24_esp8266_connect.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><p style="text-align:start;">练习AT指令：</p><ul><li><p>先烧录程序：</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\01_项目1_基于HAL库实现智能家居\
+	04_AT指令(基于ESP8266)\1_项目源码\
+		01_STM32F103_ESP8266-01S_Console</div><ul><li><p>接好USB串口线</p></li><li><p>执行AT命令：使用<b>6_AiThinker_Serial_Tool_V1.2.3</b></p></li><li><p>向开发板发送网络数据：使用<b>sscom5.13.1.zip</b></p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">1. 配置 WiFi 模式
+AT+CWMODE=3						// softAP+station mode
+
+2. 连接路由器
+AT+CWJAP=&quot;Programmers&quot;,&quot;100asktech&quot; // SSID and password of router
+响应：OK
+
+3. 查询 ESP8266 设备的 IP 地址<b>，查询到的STAIP+CIFSR:STAIP</b>
+才是需要的
+AT+CIFSR
+响应：
+  +CIFSR:APIP,&quot;192.168.4.1&quot;
+  +CIFSR:APMAC,&quot;1a:fe:34:a5:8d:c6&quot;
+  +CIFSR:STAIP,&quot;192.168.3.133&quot;           
+  +CIFSR:STAMAC,&quot;18:fe:34:a5:8d:c6&quot;
+  OK
+  
+4. 单连接
+AT+CIPMUX=0
+响应：
+OK
+
+5. 创建 UDP 传输, 最后一个参数设置为2时表示UDP通信的远端可改变
+    （这个IP地址为我们所任意设置的PC本地IP，这里任意设置之后，如果需要使用ESP8266向电脑发送数据，那么SSCOM软件中本地IP就需要设置为192.168.101.110，端口为8080）
+AT+CIPSTART=&quot;UDP&quot;,&quot;192.168.101.110&quot;,8080,1112,2
+响应：
+CONNNECT	
+OK
+
+6. 发送数据
+AT+CIPSEND=7	 	// Send 7 bytes
+&gt;UDPtest			//	enter the data, no CR
+响应：
+Recv 7 bytes
+OK
+
+7. 发送数据到其他指定远端。例例如，发数据到 192.168.101.111, 端⼝口 1000
+AT+CIPSEND=7,&quot;192.168.101.111&quot;,1000	 //	Send 7 bytes
+&gt;UDPtest							 //	enter the data, no CR
+响应：
+Recv 7 bytes
+OK
+
+8. 接收数据。 当 ESP8266 设备接收到服务器器发来的数据，将提示如下信息：
++IPD,n:xxxxxxxxxx // received n bytes, data=xxxxxxxxxxx	
+
+9. 断开 UDP 传输
+AT+CIPCLOSE
+响应：
+CLOSED
+OK</div><p style="text-align:start;"><br/></p><img src="【1】07网络子系统设计程序设计框架_files/24_upd_params.png" type="image/png" data-filename="24_upd_params.png" style="--en-uploadstate:uploaded;"/><div><br/></div><h2>2.2 ESP8266编程</h2><p style="text-align:start;"><br/></p><h2>2.3 网卡管理层编程</h2><p style="text-align:start;"><br/></p><p style="text-align:start;"><br/></p><h1>3.网络系统_实现AT命令</h1><p style="text-align:start;">参考资料：</p><ul><li><p>AT指令</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\00_基础资源资料\
+	1_STM32F103\3_硬件资料\4_ESP8266-01S模块资料\01_技术手册\01_乐鑫(espressif)\
+		ESP8266 Non-OS AT 指令使用示例_V1.3.pdf</div><ul><li><p>操作视频</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">09-7_2-1.AT指令应用示例_UDP 传输_固定远端的 UDP 通信
+09-7_2-2.AT指令应用示例_远端可变的 UDP 通信</div><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\
+			10_21_net_at_command</div><h2>3.1 编写at_command.c</h2><p style="text-align:start;">在esp8266.c中，调用了这些函数：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">ATInterfaceSelect
+ATInterfaceInit
+ATCommandSend
+ATDataRecv</div><img src="【1】07网络子系统设计程序设计框架_files/25_at_hardware_interface.png" type="image/png" data-filename="25_at_hardware_interface.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><p style="text-align:start;"><br/></p><ul><li><p>ATCommandSend</p></li><ul><li><p>发送</p></li><li><p>读取返回结果</p></li><li><p>判断状态</p></li></ul><li><p>ATDataRecv</p></li><ul><li><p>读取数据</p></li><li><p>解析数据</p></li><li><p>判断状态</p></li></ul></ul><p style="text-align:start;"><br/></p><h2>3.2 实现UART接口设备</h2><p style="text-align:start;">所以，对于不同的接口，抽象出一个结构体：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">#define ATInterfaceDevice  UARTDevice
+#define PATInterfaceDevice PUARTDevice
+
+typedef struct UARTDevice {
+	char *name;
+	int (*Init)(struct UARTDevice *ptDev);
+	void (*InvalidRecvBuf)(struct UARTDevice *ptDev);
+	int (*Write)(struct UARTDevice *ptDev, char *Data, int iLen);
+	int (*ReadByte)(struct UARTDevice *ptDev, char *Data);
+}UARTDevice, *PUARTDevice;</div><h2>3.3 AT命令返回值判断</h2><div><br/></div><img src="【1】07网络子系统设计程序设计框架_files/Image [1].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>以字符形式显示，得到OK换行的编码格式</div><img src="【1】07网络子系统设计程序设计框架_files/Image [2].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><ul><li><div>回车：4F 4B</div></li><li><div>换行：0D 0A</div></li></ul><div><br/></div><div><br/></div><h1>4.网络系统_串口设备编程</h1><p style="text-align:start;">参考资料：</p><ul><li><p>视频</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">08-6环形缓冲区的概念和实现</div><ul><li><p>源码(板载UATT1的源码)</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\
+		10_22_net_uart_not_tested\
+				ModuleDrivers\driver_usart.c</div><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\
+			10_22_net_uart_not_tested</div><h2>4.1 AT模块框架</h2><p style="text-align:start;">在at_command.c里，调用了底层UART硬件的接口函数：</p><img src="【1】07网络子系统设计程序设计框架_files/26_uart_device_struct.png" type="image/png" data-filename="26_uart_device_struct.png" style="--en-uploadstate:uploaded;"/><img src="【1】07网络子系统设计程序设计框架_files/Image [3].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><img src="【1】07网络子系统设计程序设计框架_files/25_at_hardware_interface [1].png" type="image/png" data-filename="25_at_hardware_interface.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><h2>4.2 实现UART接口设备</h2><img src="【1】07网络子系统设计程序设计框架_files/27_use_two_uarts.png" type="image/png" data-filename="27_use_two_uarts.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;">STM32F103上使用了2个UART：</p><ul><li><p>UART1：通过USB串口芯片与PC相连，实现了printf、scanf等操作</p></li><li><p>UART3：与WIFI模块ESP8266相连</p></li></ul><p>编程思路：</p><img src="【1】07网络子系统设计程序设计框架_files/Image [4].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div><br/></div><p style="text-align:start;">UART1的代码在ModuleDrivers\driver_usart.c里，</p><p style="text-align:start;">我们可以参考这个文件实现UART3的操作。</p><p style="text-align:start;"><br/></p><h3>4.2.1 初始化</h3><ul><li><p>硬件初始化：引脚、波特率等</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">// Core\Src\usart.c
+void MX_USART3_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART3_Init 0 */
+
+  /* USER CODE END USART3_Init 0 */
+
+  /* USER CODE BEGIN USART3_Init 1 */
+
+  /* USER CODE END USART3_Init 1 */
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 115200;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&amp;huart3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART3_Init 2 */
+
+  /* USER CODE END USART3_Init 2 */
+
+}</div><ul><li><p>中断初始化</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">// ModuleDrivers\driver_usart.c
+
+void EnableUART3IRQ(void)
+{
+    HAL_NVIC_SetPriority(USART3_IRQn, 0, 1);
+    HAL_NVIC_EnableIRQ(USART3_IRQn);
+    
+    __HAL_UART_ENABLE_IT(&amp;huart3, UART_IT_RXNE); 
+}</div><ul><li><p>环形缓冲区的初始化</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">// smartdevice\device\uart\uart_dev.c
+
+/**********************************************************************
+ * 函数名称： UART3Init
+ * 功能描述： 初始化UART3
+ * 输入参数： ptDev-没有使用
+ * 输出参数： 无
+ * 返 回 值： 0-成功
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/15	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+static int UART3Init(struct UARTDevice *ptDev)
+{
+	/* 在Core\Src\main.c里已经初始化硬件
+	 * 1. MX_USART3_UART_Init
+	 * 2. EnableUART3IRQ
+	 */
+
+	ring_buffer_init(&amp;g_UART3RingBuffer);
+	
+	return 0;
+}</div><h3>4.2.2 发送数据</h3><p style="text-align:start;">使用查询方式发送多个数据，调用流程如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">UART3Write // smartdevice\device\uart\uart_dev.c
+	KAL_UART3Write // smartdevice\kal\kal_uart_dev.c
+		CAL_UART3Write // smartdevice\cal\cal_uart_dev.c
+			USART3_SendBytes // ModuleDrivers\driver_usart.c</div><p style="text-align:start;"><br/></p><p style="text-align:start;">底层函数是USART3_SendBytes，代码如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">// ModuleDrivers\driver_usart.c
+
+/**********************************************************************
+ * 函数名称： USART3_SendBytes
+ * 功能描述： 通过UART3发出多个数据
+ * 输入参数： buf-数据缓冲区
+ * 输入参数： len-数据长度
+ * 输出参数： 无
+ * 返 回 值： 0-成功
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/15	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+void USART3_SendBytes(char *buf, int len)
+{
+	int i;
+	for (i = 0; i &lt; len; i++)
+	{
+		while ((USART3-&gt;SR &amp; (1&lt;&lt;7)) == 0);
+		USART3-&gt;DR = buf[i];		
+	}
+}</div><p style="text-align:start;"><br/></p><h3>4.2.3 接收数据</h3><p style="text-align:start;">流程为：</p><ul><li><p>中断服务程序：把数据放入环形缓冲区</p></li><li><p>上层代码：从环形缓冲区得到数据</p></li></ul><p style="text-align:start;">中断服务程序代码：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">// ModuleDrivers\driver_usart.c
+
+/**********************************************************************
+ * 函数名称： USART3_IRQHandler
+ * 功能描述： UART3中断函数,把接收到的数据放入环形缓冲区
+ * 输入参数： 无
+ * 输出参数： 无
+ * 返 回 值： 无
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/15	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+void USART3_IRQHandler(void)
+{
+	static ring_buffer *uart3_ringbuffer = GetUART3RingBuffer();
+    unsigned char c = 0;
+	
+    if((USART3-&gt;SR &amp;(1&lt;&lt;5)) != 0)
+    {
+        c = USART3-&gt;DR;
+        ring_buffer_write(c, uart3_ringbuffer);
+    }
+    HAL_UART_IRQHandler(&amp;huart3);
+}</div><p style="text-align:start;"><br/></p><p style="text-align:start;">上层代码:</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">// smartdevice\device\uart\uart_dev.c
+
+/**********************************************************************
+ * 函数名称： UART3ReadByte
+ * 功能描述： 通过UART3读取1个字节(不等待,无数据就返回-1)
+ * 输入参数： ptDev-没有使用
+ * 输出参数： Data-数据缓冲区
+ * 返 回 值： 0-成功, (-1)-无数据
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/15	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+static int UART3ReadByte(struct UARTDevice *ptDev, char *Data)
+{
+	return ring_buffer_read((unsigned char *)Data, &amp;g_UART3RingBuffer)
+  }</div><p style="text-align:start;"><br/></p><h1>5.网络系统_单元测试</h1><p style="text-align:start;">参考资料：</p><ul><li><p>AT指令</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\00_基础资源资料\
+	1_STM32F103\3_硬件资料\4_ESP8266-01S模块资料\01_技术手册\01_乐鑫(espressif)\
+		ESP8266 Non-OS AT 指令使用示例_V1.3.pdf</div><ul><li><p>操作视频</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">09-7_2-1.AT指令应用示例_UDP 传输_固定远端的 UDP 通信
+09-7_2-2.AT指令应用示例_远端可变的 UDP 通信</div><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\
+			10_23_net_unittest_err
+			10_24_net_unittest_ok</div><h2>5.1 编写测试代码</h2><ul><li><p>初始化</p></li><li><p>连接WIFI</p></li><li><p>显示自己的IP、端口</p></li><li><p>创建UDP传输</p></li><li><p>读取数据、打印出来</p></li></ul><p style="text-align:start;"><br/></p><h2>5.2 上机测试</h2><p style="text-align:start;">向开发板发送数据：</p><ul><li><p>使用<b>sscom5.13.1</b></p></li><li><p>使用微信小程序：搜&quot;百问网嵌入式物联网&quot;</p></li><li><p>使用微信小程序：扫码 </p></li></ul><img src="【1】07网络子系统设计程序设计框架_files/28_wechat_little_prgram.png" type="image/png" data-filename="28_wechat_little_prgram.png" style="--en-uploadstate:uploaded;"/><div><br/></div><h1>6.网络系统_用作输入设备</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\
+			10_25_net_input_not_tested</div><h2>6.1 设计思路</h2><img src="【1】07网络子系统设计程序设计框架_files/27_use_two_uarts [1].png" type="image/png" data-filename="27_use_two_uarts.png" style="--en-uploadstate:uploaded;"/><img src="【1】07网络子系统设计程序设计框架_files/Image [5].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;">ESP8266通过串口把网络数据发给主控，数据格式为：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">+IPD,n:xxxxxxxxxx // received n bytes, data=xxxxxxxxxxx	</div><p style="text-align:start;">所以，可以这样做：</p><ul><li><p>在串口接收中断里：记录收到的数据</p></li><li><p>判断是否有+IPD,前缀</p></li><ul><li><p>如果有，继续接收数据，得到长度n</p></li><ul><li><p>得到长度后，继续接收数据本身</p></li><li><p>接收到n个数据后，构造InputEvent，放入缓冲区</p></li></ul></ul></ul><h2>6.2 编写代码</h2><p style="text-align:start;">构造一个InputDevice，在它的初始化函数里，提供串口中断的回调函数。</p><p style="text-align:start;">在回调函数里，处理串口数据。</p><p style="text-align:start;"><br/></p><h2>6.3 上机测试</h2><p style="text-align:start;">向开发板发送数据：</p><ul><li><p>使用<b>sscom5.13.1</b></p></li><li><p>使用微信小程序：搜&quot;百问网嵌入式物联网&quot;</p></li><li><p>使用微信小程序：扫码</p></li></ul><img src="【1】07网络子系统设计程序设计框架_files/28_wechat_little_prgram [1].png" type="image/png" data-filename="28_wechat_little_prgram.png" style="--en-uploadstate:uploaded;"/><div><br/></div><h1>7.网络系统_用作输入设备_单元测试</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\
+			10_25_net_input_not_tested
+			10_26_net_input_unittest_ok</div><h2>7.1 编写单元测试代码</h2><p style="text-align:start;">仍然使用net_test.c</p><p style="text-align:start;"><br/></p><h2>7.2 上机测试</h2><p style="text-align:start;">向开发板发送数据：</p><ul><li><p>使用<b>sscom5.13.1</b></p></li><li><p>使用微信小程序：搜&quot;百问网嵌入式物联网&quot;</p></li><li><p>使用微信小程序：扫码</p></li></ul><img src="【1】07网络子系统设计程序设计框架_files/28_wechat_little_prgram [2].png" type="image/png" data-filename="28_wechat_little_prgram.png" style="--en-uploadstate:uploaded;"/><p><br/></p><p><br/></p></span>
+</div></body></html> 

@@ -1,0 +1,244 @@
+<html>
+<head>
+  <title>【1】06字体子系统设计|程序设计框架</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/605138 (zh-CN, DDL); Windows/10.0.0 (Win64); EDAMVersion=V2;"/>
+  <meta name="content-class" content="yinxiang.superNote"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+<body>
+<a name="3549"/>
+<h1>【1】06字体子系统设计|程序设计框架</h1>
+<div>
+<table bgcolor="#D4DDE5" border="0">
+<tr><td><b>创建时间：</b></td><td><i>2022/3/1 16:10</i></td></tr>
+<tr><td><b>更新时间：</b></td><td><i>2022/4/13 18:14</i></td></tr>
+<tr><td><b>作者：</b></td><td><i>gi51wa2j</i></td></tr>
+<tr><td><b>标签：</b></td><td><i>bingo, RTOS训练营, 基于HAL的智能家居, 正文</i></td></tr>
+</table>
+</div>
+<br/>
+
+<div><span><h1>1.字体系统_设计思路与结构体</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\10_13_font_struct</div><h2>1.1 点阵字体和矢量字体差别</h2><p style="text-align:start;">有点阵字体，有矢量字体，比如：</p><ul><li><p>使用点阵绘制文字时：每个文字的大小一样，前后文字互不影响 </p></li></ul><img src="【1】06字体子系统设计程序设计框架_files/16_font_bit.png" type="image/png" data-filename="16_font_bit.png" style="--en-uploadstate:uploaded;"/><ul><li><p>使用Freetype绘制文字时：大小可能不同，前面文字会影响后面文字 </p></li></ul><img src="【1】06字体子系统设计程序设计框架_files/17_freetype_font.png" type="image/png" data-filename="17_freetype_font.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><h3>1.1.1 点阵字体描述</h3><p style="text-align:start;">对于普通的点阵字体（8*16），怎么描述它？比如下面的点阵：</p><ul><li><p>X、Y方向大小</p></li><li><p>每个像素的值</p></li></ul><img src="【1】06字体子系统设计程序设计框架_files/18_dot_font_example.png" type="image/png" data-filename="18_dot_font_example.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;">用下面的结构体来表示即可：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">struct dot_font {
+    int iWidth;
+    int iHeigh;
+    unsigned char *dots; /* 执行一个bufffer, dots[0]对应第1列, dots[1]对应第1列, ... */
+};</div><h3>1.1.2 矢量字体描述</h3><p style="text-align:start;">对于矢量字体，每个字体的大小可能不一样，前一个字体会影响下一个字体。</p><p style="text-align:start;">下图是一个矢量字体的例子，图中两个黑点很重要：</p><ul><li><p>右边的黑点：当前字符的原点</p></li><li><p>右边的黑点：下一个字符的原点</p></li></ul><img src="【1】06字体子系统设计程序设计框架_files/19_freetype_font_example.png" type="image/png" data-filename="19_freetype_font_example.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;">怎么描述一个矢量字体？上图的参数都要记录下来。</p><h2>1.2 字体位图的数据结构</h2><p style="text-align:start;">能否抽象出一个结构体，既能描述点阵字体，也能描述矢量字体？</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">typedef struct FontBitMap {
+	int iLeftUpX;     /* 位图左上角X坐标 */
+	int iLeftUpY;     /* 位图左上角Y坐标 */
+	int iWidth;       /* 字体宽度 */
+	int iRows;        /* 字体高度 */
+	int iCurOriginX;  /* 原点X坐标 */
+	int iCurOriginY;  /* 原点Y坐标 */
+	int iNextOriginX; /* 下一个字符原点X坐标 */ 
+	int iNextOriginY; /* 下一个字符原点Y坐标 */ 
+	unsigned char *pucBuffer; /* 字符点阵 */
+}FontBitMap, *PFontBitMap;</div><img src="【1】06字体子系统设计程序设计框架_files/kuni9kn30hqy.jpg" type="image/jpeg" data-filename="kuni9kn30hqy.jpg" style="--en-uploadstate:uploaded;"/><h2>1.2.1 程序中原点的确定</h2><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">不用纠结原点在哪里，这个原点只是对于这个字符来说的，不是对LCD来说的。</span></span></span></span></div><img src="【1】06字体子系统设计程序设计框架_files/kuni9map0v3o.jpg" type="image/jpeg" data-filename="kuni9map0v3o.jpg" style="--en-uploadstate:uploaded;"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">看这个图里面，画出了三个原点，</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">这里认为LCD的原点在左上角，</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">认为第1个字符A的原点在左下角，换一种表示方法，又认为第2个字符A的原点在左上角。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">这有什么关系呢？这只是一些坐标运算而已。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">比如我要把字符a显示在LCD的左上角：</span></span></span></span></div><img src="【1】06字体子系统设计程序设计框架_files/kuni9mfv0j3s.jpg" type="image/jpeg" data-filename="kuni9mfv0j3s.jpg" style="--en-uploadstate:uploaded;"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">字符A的原点在哪里？在LCD坐标系里面，红色原点的坐标就是(0, 15)。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">我认为字符a的原点在左上角：</span></span></span></span></div><img src="【1】06字体子系统设计程序设计框架_files/kuni9muc0jqz.jpg" type="image/jpeg" data-filename="kuni9muc0jqz.jpg" style="--en-uploadstate:uploaded;"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">字库中的点阵坐标是相对字体原点的绝对坐标位置。</span></span></span></span></div><h2>1.3 字体库的数据结构</h2><p style="text-align:start;">对于字库操作，最关键的点在于&quot;获得指定字符&quot;的字库数据。</p><p style="text-align:start;">另外，</p><p style="text-align:start;">点阵字库文件中，每个字符大小是固定的。</p><p style="text-align:start;">矢量字符文字文件中，可以灵活设置字符的大小。</p><p style="text-align:start;">可以抽象出这样的结构体：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">//字库结构体
+typedef struct FontLib{
+	//字库类型
+	char *name;
+	//字库初始化
+	int (*FontInit)(struct FontLib * pFontLib);
+	//获取字体大小
+	void (*GetFontSize)(int *piWidth,int *piHeigh);
+	//设置字体大小
+	int (*SetFontSize)(int iFontSize);
+	//获取当前dwCode的点阵数据  
+	int (*GetFontBitMap)(unsigned int dwCode,PFontBitMap ptFontBitMap);
+	//链表
+	struct FontLib *pNext;
+}FontLib,*PFontLib;</div><p style="text-align:start;"><br/></p><h2>1.4 程序层次</h2><div>以上两个结构体所搭建的程序框架，可以支持以下三种字库</div><img src="【1】06字体子系统设计程序设计框架_files/15_font_levels.png" type="image/png" data-filename="15_font_levels.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><h1>2.字体系统_实现ASCII字库的操作</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\10_14_font_ascii</div><h2>2.1 程序层次</h2><img src="【1】06字体子系统设计程序设计框架_files/15_font_levels [1].png" type="image/png" data-filename="15_font_levels.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><h2>2.2 构造FontLib</h2><p style="text-align:start;">编写ascii_font.c，构造一个FontLib结构体：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/* 构造一个FontLib */
+static FontLib g_ASCIIFontLib = {
+	&quot;ascii&quot;,
+	NULL,
+	ASCIIGetFontSize,
+	NULL,
+	ASCIIGetFontBitMap,
+};</div><p style="text-align:start;"><br/></p><p style="text-align:start;">函数ASCIIGetFontSize用来获得字库点阵的宽度、高度，代码如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： ASCIIGetFontSize
+ * 功能描述： 获得ASCII字库中字符点阵的宽、高
+ * 输入参数： 无
+ * 输出参数： piWidth-保存宽度
+ * 输出参数： piHeigh-保存高度
+ * 返 回 值： 无
+ * 修改日期        版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/08	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+static void ASCIIGetFontSize(int *piWidth, int *piHeigh)					/* 获取字体大小 */
+{
+	if (piWidth)
+		*piWidth = 8;
+	if (piHeigh)
+		*piHeigh = 16;
+}</div><p style="text-align:start;"><br/></p><p style="text-align:start;">核心函数是ASCIIGetFontBitMap：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： ASCIIGetFontBitMap
+ * 功能描述： 获得ASCII字库中某个字符的点阵
+ * 输入参数： dwCode-哪个字符,字符的ASCII码
+ * 输出参数： ptFontBitMap-用来保存字库点阵
+ * 返 回 值： 0-成功, -1-失败
+ * 修改日期        版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/08	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+static int ASCIIGetFontBitMap(unsigned int dwCode, PFontBitMap ptFontBitMap)  /* 获取某个字符的字库 */
+{
+	int iWidth = 8;
+	int iHeigh = 16;
+	unsigned char *dots = ascii_font[dwCode];
+	if (!ptFontBitMap)
+	{
+		/* 调用GetFontBitMap之前要设置原点X,Y坐标
+		 * 根据它可以算出左上角X,Y坐标
+		 * 根据它可以算出下一个字符的原点X,Y坐标
+		 */
+
+		/* 计算左上角坐标 */
+		ptFontBitMap-&gt;iLeftUpX = ptFontBitMap-&gt;iCurOriginX;
+		ptFontBitMap-&gt;iLeftUpY = ptFontBitMap-&gt;iCurOriginY - iHeigh + 1;
+
+		/* 计算下一个字符的原点坐标 */
+		ptFontBitMap-&gt;iNextOriginX = ptFontBitMap-&gt;iCurOriginX + iWidth;
+		ptFontBitMap-&gt;iNextOriginY = ptFontBitMap-&gt;iCurOriginY;
+
+		/* 设置点阵宽度/高度 */
+		ptFontBitMap-&gt;iWidth = iWidth;
+		ptFontBitMap-&gt;iRows  = iHeigh;
+
+		/* 如果用户没有提供自己的buffer, 直接返回字库数组里的数据 */
+		if (!ptFontBitMap-&gt;pucBuffer)
+			ptFontBitMap-&gt;pucBuffer = dots;
+		else /* 如果用户提供了自己的buffer, 复制字库数组里的数据 */
+			memcpy(ptFontBitMap-&gt;pucBuffer, dots, 16);
+
+		return 0;
+	}
+	return -1;
+}</div><img src="【1】06字体子系统设计程序设计框架_files/Image.png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h3>2.3.1 问题1 将&quot;dots&quot;赋值给&quot;pucBuffer&quot;的两种情况</h3><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">写个代码举例：</span></span></span></span></div><img src="【1】06字体子系统设计程序设计框架_files/kuni9m9s0cia.jpg" type="image/jpeg" data-filename="kuni9m9s0cia.jpg" style="--en-uploadstate:uploaded;"/><div><span style="font-size: 13pt;">pucBuffer在代码中是一个字符指针，指向一段空间。</span></div><div><span style="font-size: 13pt;">如果指向的地址不为空，则直接进行重新指向即可。</span></div><div><span style="font-size: 13pt;">如果指向的地址为空，则需要在这里重新拷贝数据。</span></div><h2>2.3 实现管理层</h2><h3>2.3.1 font_manager.c</h3><p style="text-align:start;">底层字库要向上注册FontLib，函数FontLibRegister代码如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： FontLibRegister
+ * 功能描述： 注册一个字库
+ * 输入参数： ptFontLib-字库
+ * 输出参数： 无
+ * 返 回 值： 无
+ * 修改日期        版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/09	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+void FontLibRegister(PFontLib ptFontLib)
+{
+	ptFontLib-&gt;pNext = g_ptFontLibs;
+	g_ptFontLibs = ptFontLib;
+}</div><p style="text-align:start;"><br/></p><p style="text-align:start;">所谓注册，就是把底层的FontLib放入上层的链表。</p><p style="text-align:start;">我们还可以根据名字，从链表里把FontLib取出来，函数为__GetFontLib：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： __GetFontLib
+ * 功能描述： 获得字库
+ * 输入参数： name-字库的名称
+ * 输出参数： 无
+ * 返 回 值： 成功-PFontLib, 失败-NULL
+ * 修改日期        版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/09	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+PFontLib __GetFontLib(char *name)
+{
+	PFontLib pTmp = g_ptFontLibs;
+	while (pTmp)
+	{
+		if (strcmp(pTmp-&gt;name, name) == 0)
+			return pTmp;
+		else
+			pTmp = pTmp-&gt;pNext;
+	}
+	return NULL;
+}</div><p style="text-align:start;"><br/></p><h3>2.3.2 font_system.c</h3><p style="text-align:start;">为了让font_manager.c和底层的ascii_font.c不相互调用，引入了font_system.c。</p><p style="text-align:start;">里面有2个函数：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： AddFontLibs
+ * 功能描述： 注册多个字库
+ * 输入参数： 无
+ * 输出参数： 无
+ * 返 回 值： 无
+ * 修改日期        版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/08	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+void AddFontLibs(void)
+{
+	AddFontLibASCII();
+}
+
+/**********************************************************************
+ * 函数名称： GetFontLib
+ * 功能描述： 获得字库
+ * 输入参数： name-字库的名称
+ * 输出参数： 无
+ * 返 回 值： 成功-PFontLib, 失败-NULL
+ * 修改日期        版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/09	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+PFontLib GetFontLib(char *name)
+{
+	return __GetFontLib(name);
+}</div><p style="text-align:start;"><br/></p><h1>3.文字显示_设计思路</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\10_15_show_text_encoding</div><h2>3.1 怎么显示一个字符？</h2><img src="【1】06字体子系统设计程序设计框架_files/21_show_text.png" type="image/png" data-filename="21_show_text.png" style="--en-uploadstate:uploaded;"/><ul><li><div>确定编码集</div></li><li><div>字库文件中取出点阵</div></li><li><div>在LCD上显示</div></li></ul><div><br/></div><h3>3.1.1 编码集/字符集</h3><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">char *str = &quot;ABC中国&quot;;</div><p style="padding-left:40px;text-align:start;">对于同一个字符串，它们所对应的编码集不一样</p><img src="【1】06字体子系统设计程序设计框架_files/Image [1].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div style="text-align:start;">对于英文编码集，这个统一编码称为ASCII</div><img src="【1】06字体子系统设计程序设计框架_files/Image [2].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div style="text-align:start;">对于中文来说，台湾人使用的编码集为Big5、大陆人使用的编码集为GB2312，如果不采用相同的编码集打开文件，就可能会乱码</div><div style="text-align:start;">GB2312编写的文件使用Big5编码方式打开结果如下</div><img src="【1】06字体子系统设计程序设计框架_files/Image [3].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div style="text-align:start;">但是由于不同的地区所编写的文件都采用不同的编码集比较麻烦，所以提出了UNICODE编码集，所有的字符都有一个唯一的数值，就不用不同区域使用不同的编码集。</div><h3>3.1.2 Unicode编码集</h3><div><span style="font-size: 12pt;"><b>Unicode编码集：所有的字符都对应唯一的数值，世界上的所有符号在该编码集中有拥有独一无二的编码，对于Unicode的使用查询</b></span><a href="http://www.unicode.org/" rel="noopener" rev="en_rl_none"><span style="font-size: 12pt;"><b><span style="font-weight: 400;"><u>unicode.org</u></span></b></span></a><span style="font-size: 12pt;"><b>，或者专门的</b></span><a href="http://www.chi2ko.com/tool/CJK.htm" rel="noopener" rev="en_rl_none"><span style="font-size: 12pt;"><b><span style="font-weight: 400;"><u>汉字对应表</u></span></b></span></a><span style="font-size: 12pt;"><b><span style="font-weight: 400;"><u> </u></span></b></span></div><div>Unicode 当然是一个很大的集合，现在的规模可以容纳100多万个符号。每个符号的编码都不一样，比如，U+0639表示阿拉伯字母Ain，U+0041表示英语的大写字母A，U+4E25表示汉字“严”。</div><div>但是<span style="font-size: 13pt;"><span style="color: #FF0000;"><b>Unicode只规定了符号集，确定了符号的二进制代码，但是没有规定二进制代码如何保存:</b></span></span></div><div>由此产生了多种不同的二进制格式来表示Unicode，使用较广的一种方式是<span style="color: #FF0000;"><b>UTF-8，它属于Unicode的实现方式之一</b></span></div><h3>3.1.3 UTF-16编码格式（不推荐使用）</h3><div>一个字符使用两个字节来表示，再引入大字节序和小字节序号。</div><img src="【1】06字体子系统设计程序设计框架_files/Image [4].png" type="image/png" data-filename="Image.png" style="--en-marks:%3Cen-note%3E%3Ccenter%3E%7B%22id%22%3A%221%22%2C%22name%22%3A%22UTF-16%22%2C%22mode%22%3A%22mindmap%22%2C%22module%22%3Atrue%2C%22translateX%22%3A0%2C%22translateY%22%3A0%2C%22treeDirection%22%3A%22right%22%2C%22pathType%22%3A%22default%22%2C%22treeTheme%22%3A%22light%22%2C%22children%22%3A%5B%7B%22name%22%3A%22UTF16-LE%22%2C%22id%22%3A%224e9cc8f6-0afd-4a0e-a96a-3e9c2e041a39%22%2C%22parent%22%3A%221%22%7D%2C%7B%22name%22%3A%22UTF16-BE%22%2C%22id%22%3A%228e787f83-4eb7-4ed8-a15d-0a6422fd8ce0%22%2C%22parent%22%3A%221%22%7D%5D%7D%3C%2Fcenter%3E%3C%2Fen-note%3E;--en-uploadstate:uploaded;"/><div>以小字节序为例，</div><ul><li><div>“ABC中”的Unicode编码为：65，66，67，4E，2D</div></li><li><div>在UTF16-LE小字节序中排序为</div></li></ul><table style="--en-fitwindow:false;border-left:1px solid #d9d9d9;border-top:1px solid #d9d9d9;border-collapse:collapse;width:461px;" width="461px"><colgroup><col style="width: 61px;"></col><col style="width: 63px;"></col><col style="width: 51px;"></col><col style="width: 61px;"></col><col style="width: 57px;"></col><col style="width: 60px;"></col><col style="width: 59px;"></col><col style="width: 49px;"></col></colgroup><tbody><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">65</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">00</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">66</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">00</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">67</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>00</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">2D</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">4E</div></td></tr></tbody></table><div><span style="font-size: 12pt;"><b>缺点如下：</b></span></div><ul><li><div>一个字节可以表示的东西用两个字节浪费空间</div></li><li><div>如果缺少一个容易导致全部乱码</div></li></ul><h3>3.1.4 UTF-8编码格式</h3><div>   UTF-8编码格式最大的特点是他是一种变长度的编码格式，可以使用1-4个字节来表示一个符号，根据不同的符号而变化字节长度。</div><div><b>    UTF-8的编码规则如下：</b></div><ul><li><div><span style="color: #FF0000;">对于单字节的符号，字节第一位设为0</span>，后面7位为这个符号的Unicode码，因此对于英文字符，UTF-8编码和ASCII编码是相同的，都是1个字节。</div></li><li><div><span style="color: #FF0000;">对于n字节的符号（n&gt;1）,第一个字节的前n位都设为1，第n+1位设为0，后面字节的前两位一律设置为10</span>。剩下的没有提及的二进制位，全部是这个符号的Uicode码。</div></li></ul><table style="--en-fitwindow:false;border-left:1px solid #d9d9d9;border-top:1px solid #d9d9d9;border-collapse:collapse;width:754px;" width="754px"><colgroup><col style="width: 404px;"></col><col style="width: 350px;"></col></colgroup><tbody><tr><th style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>Unicode数值范围(16进制)</div></th><th style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>UTF-8编码方式(二级制)</div></th></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">0000 0000-0000 007F</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">0xxxxxxx</div></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">0000 0080-0000 07FF</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">110xxxxx 10xxxxxx</div></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">0000 0800-0000 FFFF</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">1110xxxx 10xxxxxx 10xxxxxx</div></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">0001 0000-0010 FFFF</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div style="text-align:center;">11110xxx 10xxxxxx 10xxxxxx 10xxxxxx</div></td></tr></tbody></table><div><b>    UTF-8的编码解读如下：</b></div><ul><li><div><span style="color: #FF0000;">如果第一个字节的第一位是0，则这个字节单独就是一个字符；如果第一位是1，则有多少个1，就便是当前字符占用多少字节</span>（将字符长度信息与字符编码信息合并表示）</div></li></ul><div style="--en-callout:true;"><div><span style="font-size: 13pt;"><b>MDK5中UTF8 示例</b></span></div></div><div>对于字符串“ABC中国”，我们虽然知道了各个字符对应的UTF-8格式如下</div><img src="【1】06字体子系统设计程序设计框架_files/Image [5].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>对于UTF-8，上一个符号中字节数据的丢失对于下一个符号的检测不会产生影响。</div><img src="【1】06字体子系统设计程序设计框架_files/Image [6].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div><br/></div><h3>3.1.5 GB2312编码格式</h3><img src="【1】06字体子系统设计程序设计框架_files/Image [7].png" type="image/png" data-filename="Image.png" style="--en-marks:%3Cen-note%3E%3Ccenter%3E%7B%22id%22%3A%221%22%2C%22name%22%3A%22GB2312%22%2C%22mode%22%3A%22mindmap%22%2C%22module%22%3Atrue%2C%22translateX%22%3A0%2C%22translateY%22%3A0%2C%22treeDirection%22%3A%22right%22%2C%22pathType%22%3A%22default%22%2C%22treeTheme%22%3A%22light%22%2C%22children%22%3A%5B%7B%22name%22%3A%22%E8%8B%B1%E6%96%87%22%2C%22id%22%3A%2278ba10e1-ef5f-495b-b6b6-2e03368be8c7%22%2C%22parent%22%3A%221%22%2C%22children%22%3A%5B%7B%22name%22%3A%22%E4%BD%BF%E7%94%A81%E4%B8%AA%E5%AD%97%E8%8A%82%E8%A1%A8%E7%A4%BA%EF%BC%8Cbit7%3D0%22%2C%22id%22%3A%22ceaa6d7a-b6b2-4881-b1fe-1f6bf9d2e9ca%22%2C%22parent%22%3A%2278ba10e1-ef5f-495b-b6b6-2e03368be8c7%22%7D%5D%7D%2C%7B%22name%22%3A%22%E6%B1%89%E5%AD%97%22%2C%22id%22%3A%22b767c9c5-af6f-46fc-b92a-0b82298f189c%22%2C%22parent%22%3A%221%22%2C%22children%22%3A%5B%7B%22name%22%3A%22%E4%BD%BF%E7%94%A82%E4%B8%AA%E5%AD%97%E8%8A%82%E8%A1%A8%E7%A4%BA%EF%BC%8Cbit7%3D1%22%2C%22id%22%3A%221e4738b1-3f51-477f-a6a8-2539c706fa9d%22%2C%22parent%22%3A%22b767c9c5-af6f-46fc-b92a-0b82298f189c%22%7D%5D%7D%5D%7D%3C%2Fcenter%3E%3C%2Fen-note%3E;--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><h2>3.2 在LCD上绘制</h2><img src="【1】06字体子系统设计程序设计框架_files/22_steps_to_show_font.png" type="image/png" data-filename="22_steps_to_show_font.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><h1>4.文字显示_编程</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\10_16_show_text</div><h2>4.1 怎么显示一个字符？</h2><h3>4.1.1 总框架</h3><img src="【1】06字体子系统设计程序设计框架_files/21_show_text [1].png" type="image/png" data-filename="21_show_text.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><h3>4.1.2 具体步骤</h3><img src="【1】06字体子系统设计程序设计框架_files/22_steps_to_show_font [1].png" type="image/png" data-filename="22_steps_to_show_font.png" style="--en-uploadstate:uploaded;"/><h2>4.2 编程</h2><p style="text-align:start;">看视频：https://www.100ask.net/detail/v_616577e7e4b08b72d7fe515e/3?from=term_6128b5469d408_KtUH9u&amp;type=25&amp;parent_pro_id=</p><h1>5.文字显示_单元测试</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\
+			10_17_show_text_unittest_err
+			10_18_show_text_unittest_ok			</div><h2>5.1 编写单元测试代码</h2><p style="text-align:start;">这涉及3个系统：</p><ul><li><p>字体系统</p></li><ul><li><p>添加字库</p></li><li><p>选择默认字库</p></li><li><p>初始化化默认字库</p></li></ul><li><p>显示设备</p></li><ul><li><p>添加显示设备</p></li><li><p>获取OLED设备</p></li><li><p>初始化</p></li></ul><li><p>文字系统</p></li><ul><li><p>调用ShowTextInDisplayDevice</p></li></ul></ul><p style="text-align:start;"><br/></p><p style="text-align:start;">代码在text_test.c中，主要代码如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： text_test
+ * 功能描述： 文本系统单元测试函数
+ * 输入参数： 无
+ * 输出参数： 无
+ * 返 回 值： 无
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/13	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+void text_test(void)
+{
+	char *str = &quot;www.100ask.net&quot;;
+	PDisplayDevice ptDevice;
+	char *name = &quot;OLED&quot;;
+
+	/* 添加字库 */
+	AddFontLibs();
+
+	/* 选择默认字库 */
+	SetDefaultFontLib(&quot;ascii&quot;);
+
+	/* 初始化默认字库 */
+	InitDefaultFontLib();
+
+	/* 添加显示设备 */
+	AddDisplayDevices();
+
+	/* 获得指定的显示设备 */
+	ptDevice = GetDisplayDevice(name);
+
+	if (!ptDevice)
+	{
+		printf(&quot;Can not get DisplayDevice %s\r\n&quot;, name);
+		return;
+	}
+
+	/* 初始化设备 */
+	ptDevice-&gt;Init(ptDevice);
+
+	/* 清除屏幕 */
+	memset(ptDevice-&gt;FBBase, 0, ptDevice-&gt;iSize);
+
+	/* 在屏幕上显示文字 */
+	ShowTextInDisplayDevice(ptDevice, 16, 16, str);
+}</div><p style="text-align:start;"><br/></p><h2>5.2 调试、上机</h2><p style="text-align:start;">我们做了哪些修改？</p><p style="text-align:start;">可以用比较工具对比一下：10_17_show_text_unittest_err和10_18_show_text_unittest_ok</p><p style="text-align:start;">推荐的比较工具是&quot;Beyond Compare&quot;，下载地址：<a href="https://www.beyondcompare.cc/" rev="en_rl_none">https://www.beyondcompare.cc/</a></p><p style="text-align:start;"><br/></p><h1>6. 编程经验分享</h1><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bold;">① 看源码时是比较容易理解，自己码时总是卡在某些点；就比如把功能拆分成很多函数。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bold;"><i>写程序的时候，一碰到很难的地方就用一个函数来实现，这样不会影响到我的思路，不影响到我编程的思路，别人看我的代码时也不会受到影响。</i></span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bold;">② 如何连写架构设计？</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bold;"><i>要多看多写多刷题。可以不用全部弄清楚，从上往下 ，碰到什么再抽象什么。</i></span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bold;">③ 数据类型如何统一？</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><b><span style="font-weight: bold;"><i>建立一个</i></span></b></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><b><span style="font-weight: bold;"><i>type.h</i></span></b></span></span></span></span><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><b><span style="font-weight: bold;"><i>，在里面根据机器位数实现类型统一。</i></span></b></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bold;">④ 不同处理器、不同板卡、不同应用使用到的接口、设备等都可能不一样，如何让系统用同一套程序适配不同的板卡？</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bold;"><i>同一个程序支持不同的设备只能够通过配置文件来实现了。每个设备都有自己的配置文件。这个配置文件可以保存到设备上，比如内部或者外挂的FLASH，也可以保存到网络服务器上。系统每次都从存储设备中读取整个配置文件来做程序适配。</i></span></span></span></span></div></span>
+</div></body></html> 

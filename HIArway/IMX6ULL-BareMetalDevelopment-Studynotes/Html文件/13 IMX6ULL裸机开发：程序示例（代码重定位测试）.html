@@ -1,0 +1,303 @@
+<html>
+<head>
+  <title>13 IMX6ULL裸机开发：程序示例（代码重定位测试）</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/605138 (zh-CN, DDL); Windows/10.0.0 (Win64); EDAMVersion=V2;"/>
+  <meta name="content-class" content="yinxiang.superNote"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+<body>
+<a name="1233"/>
+<h1>13 IMX6ULL裸机开发：程序示例（代码重定位测试）</h1>
+<div>
+<table bgcolor="#D4DDE5" border="0">
+<tr><td><b>创建时间：</b></td><td><i>2022/1/18 16:18</i></td></tr>
+<tr><td><b>更新时间：</b></td><td><i>2022/1/21 14:35</i></td></tr>
+<tr><td><b>作者：</b></td><td><i>gi51wa2j</i></td></tr>
+<tr><td><b>标签：</b></td><td><i>100ask_IMX6ULL_v11, bingo, 操作, 正文</i></td></tr>
+</table>
+</div>
+<br/>
+
+<div><span><h1>一、源文件</h1><a href="13 IMX6ULL裸机开发：程序示例（代码重定位测试）_files/relocate.zip"><img src="13 IMX6ULL裸机开发：程序示例（代码重定位测试）_files/8c88df0875d1b05d221bc13e55a42536.png" alt="relocate.zip"></a><h1>二、数据段重定位</h1><h2>2.1 修改链接脚本imx6ull.lds</h2><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">SECTIONS {
+    . = 0x80200000;
+
+    . = ALIGN(4);
+    .text      :
+    {
+      *(.text)
+    }
+
+    . = ALIGN(4);
+    __rodata_start = .;
+
+    .rodata : { *(.rodata) }
+
+    . = ALIGN(4);
+    .data : { *(.data) }
+
+    . = ALIGN(4);
+    __bss_start = .;
+    .bss : { *(.bss) *(.COMMON) }
+    __bss_end = .;
+}</div><h2>2.2 修改程序start.s</h2><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">
+.text
+.global  _start
+_start: 	
+
+        /* 设置sp */
+	ldr sp, =(0x80000000+0x100000)
+
+	/* rodata/data重定位 */
+	ldr r0, =__rodata_start
+
+	ldr r2, =_start  /* link addr */
+	adr r3, _start   /* load addr */
+	sub r2, r2, r3
+	sub r1, r0, r2   /* 源 */
+
+	ldr r3, =__bss_start
+	sub r2, r3, r0
+
+	bl memcpy    /* r0: 目的, r1: 源, r2：长度 */
+
+        /* 调用main函数 */
+	bl main
+</div><h2>2.3 添加重定位函数</h2><div>添加到string.c函数中，添加的函数不需要在头文件声明，直接添加就可以跳转使用</div><div>汇编传参数给C语言函数，请温习笔记<a href="evernote:///view/38694434/s14/c3288bc3-e0e9-4d41-98b7-9ba9c03ff72e/c3288bc3-e0e9-4d41-98b7-9ba9c03ff72e/" rev="en_rl_none">汇编程序调用C程序</a></div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">void memcpy(void *dest, void *src, unsigned int len)
+{
+	unsigned char *pcDest = dest;
+	unsigned char *pcSrc  = src;
+
+	while (len--)
+	{
+		*pcDest = *pcSrc;
+		pcSrc++;
+		pcDest++;
+	}
+}</div><h1>三、 清除BSS段</h1><h2>3.1 修改链接脚本imx6ull.lds</h2><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">SECTIONS {
+    . = 0x80200000;
+
+    . = ALIGN(4);
+    .text      :
+    {
+      *(.text)
+    }
+
+    . = ALIGN(4);
+    __rodata_start = .;
+
+    .rodata : { *(.rodata) }
+
+    . = ALIGN(4);
+    .data : { *(.data) }
+
+    . = ALIGN(4);
+    __bss_start = .;
+    .bss : { *(.bss) *(.COMMON) }
+    __bss_end = .;
+}
+</div><h2>3.2 修改程序start.s</h2><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">
+.text
+.global  _start
+_start: 	
+
+        /* 设置sp */
+	ldr sp, =(0x80000000+0x100000)
+
+	/* rodata/data重定位 */
+	ldr r0, =__rodata_start
+
+	ldr r2, =_start  /* link addr */
+	adr r3, _start   /* load addr */
+	sub r2, r2, r3
+	sub r1, r0, r2   /* 源 */
+
+	ldr r3, =__bss_start
+	sub r2, r3, r0
+
+	bl memcpy    /* r0: 目的, r1: 源, r2：长度 */
+
+	/* clear bss */
+	ldr r0, =__bss_start
+	mov r1, #0
+	ldr r2, =__bss_end
+	sub r2, r2, r0
+	bl memset   /* r0: dest, r1: val(0), r2: len */
+	
+        /* 调用main函数 */
+	bl main
+
+</div><div><br/></div><h2>3.3 添加重定位函数</h2><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">void memcpy(void *dest, void *src, unsigned int len)
+{
+	unsigned char *pcDest = dest;
+	unsigned char *pcSrc  = src;
+
+	while (len--)
+	{
+		*pcDest = *pcSrc;
+		pcSrc++;
+		pcDest++;
+	}
+}
+
+void memset(void *dest, unsigned char val, unsigned int len)
+{
+	unsigned char *pcDest = dest;
+
+	while (len--)
+	{
+		*pcDest = val;
+		pcDest++;
+	}
+}</div><div><br/></div><h1>四、代码段重定位</h1><h2>4.1 修改链接脚本imx6ull.lds</h2><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">SECTIONS {
+    . = 0x80200000;
+
+    . = ALIGN(4);
+    .text      :
+    {
+      *(.text)
+    }
+
+    . = ALIGN(4);
+    __rodata_start = .;
+
+    .rodata : { *(.rodata) }
+
+    . = ALIGN(4);
+    .data : { *(.data) }
+
+    . = ALIGN(4);
+    __bss_start = .;
+    .bss : { *(.bss) *(.COMMON) }
+    __bss_end = .;
+}
+</div><h2>4.2 修改程序start.s</h2><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">
+.text
+.global  _start
+_start: 	
+
+        /* 设置sp */
+	ldr sp, =(0x80000000+0x100000)
+
+	/* text/rodata/data重定位 */
+	ldr r0, =_start
+
+	adr r1, _start  /* 源 */
+
+	ldr r3, =__bss_start
+	sub r2, r3, r0
+
+	bl memcpy    /* r0: 目的, r1: 源, r2：长度 */
+
+	/* clear bss */
+	ldr r0, =__bss_start
+	mov r1, #0
+	ldr r2, =__bss_end
+	sub r2, r2, r0
+	bl memset   /* r0: dest, r1: val(0), r2: len */
+	
+        /* 调用main函数 */
+	//bl main
+	ldr pc, =main
+
+</div><h2>4.3 添加重定位函数</h2><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">void memset(void *dest, unsigned char val, unsigned int len)
+{
+	unsigned char *pcDest = dest;
+
+	while (len--)
+	{
+		*pcDest = val;
+		pcDest++;
+	}
+}</div><h1>五、重定位的纯C函数实现</h1><h2>5.1 修改start.s</h2><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">
+.text
+.global  _start
+_start: 	
+
+        /* 设置sp */
+	ldr sp, =(0x80000000+0x100000)
+
+	adr r0, _start
+	bl SystemInit      /* 调用SystemInit函数 */
+	
+        /* 调用main函数 */
+	//bl main
+	ldr pc, =main</div><h2>5.2 修改链接脚本imx6ull.di</h2><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">SECTIONS {
+    . = 0x80200000;
+
+    . = ALIGN(4);
+    __text_start = .;
+    .text      :
+    {
+      *(.text)
+    }
+
+    . = ALIGN(4);
+    __rodata_start = .;
+
+    .rodata : { *(.rodata) }
+
+    . = ALIGN(4);
+    .data : { *(.data) }
+
+    . = ALIGN(4);
+    __bss_start = .;
+    .bss : { *(.bss) *(.COMMON) }
+    __bss_end = .;
+}
+</div><h2>5.3 添加init.c文件</h2><div>在string.h中声明这两个函数</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">
+#include &quot;string.h&quot;
+
+#if 0
+void SystemInit(void *loadaddr)
+{
+	extern char __text_start;
+	extern char __bss_start;
+	extern char __bss_end;
+
+	unsigned int len;
+	
+	/* text/rodata/data重定位 */
+	len = &amp;__bss_start - &amp;__text_start;
+	memcpy(&amp;__text_start, loadaddr, len);    /* 目的, 源, 长度 */
+
+	/* clear bss */
+	len = &amp;__bss_end - &amp;__bss_start;
+	memset(&amp;__bss_start, 0, len);   /* dest, val(0), len */
+}
+
+#else
+void SystemInit(void *loadaddr)
+{
+	extern char __text_start[];
+	extern char __bss_start[];
+	extern char __bss_end[];
+
+	unsigned int len;
+	
+	/* text/rodata/data重定位 */
+	len = __bss_start - __text_start;
+	memcpy(__text_start, loadaddr, len);    /* 目的, 源, 长度 */
+
+	/* clear bss */
+	len = __bss_end - __bss_start;
+	memset(__bss_start, 0, len);   /* dest, val(0), len */
+}
+
+#endif</div><div><br/></div><h2>5.4 问题1： C 语言如何获得链接脚本中的地址</h2><h3>5.4.1 使用方法</h3><ul><li><p>方法1 声明为外部变量，使用时<b>需要</b>使用取址符：</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">extern unsigned int __bss_start;
+extern unsigned int __bss_end;
+unsigned int len;
+len = (unsigned int)&amp;__bss_end - (unsigned int)&amp;__bss_start;
+memset(&amp;__bss_start, 0, len);</div><ul><li><p>方法2 声明为外部数组，使用时<b>不需要</b>使用取址符：</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">extern char __bss_start[];
+extern char __bss_end[];
+unsigned int len;
+len = __bss_end - __bss_start;
+memset(__bss_start, 0, len);</div><h3>5.4.2 怎么理解上述代码</h3><p style="text-align:start;">对于这样的C变量：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">int g_a</div><p style="text-align:start;">编译的时候会有一个符号表(symbol table)，如下：</p><table style="--en-fitwindow:false;border-left:1px solid #d9d9d9;border-top:1px solid #d9d9d9;border-collapse:collapse;width:380px;" width="380px"><colgroup><col style="width: 190px;"></col><col style="width: 190px;"></col></colgroup><tbody><tr><th style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div><span style="font-weight: bold;">Name</span></div></th><th style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div><span style="font-weight: bold;">Address</span></div></th></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>g_a</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>xxxxxxxx</div></td></tr></tbody></table><p style="text-align:start;">对于链接脚本中的各类Symbol，有2中声明方式：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">extern unsigned int __bss_start;     // 声明为一般变量
+extern char __bss_start[];           // 声明为数组</div><p style="text-align:start;">不管是哪种方式，它们都会保存在符号表里，比如：</p><table style="--en-fitwindow:false;border-left:1px solid #d9d9d9;border-top:1px solid #d9d9d9;border-collapse:collapse;width:380px;" width="380px"><colgroup><col style="width: 190px;"></col><col style="width: 190px;"></col></colgroup><tbody><tr><th style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div><span style="font-weight: bold;">Name</span></div></th><th style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div><span style="font-weight: bold;">Address</span></div></th></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>g_a</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>xxxxxxxx</div></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>__bss_start</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>yyyyyyyy</div></td></tr></tbody></table><ul><li><p>对于int g_a变量</p></li><ul><li><p>使用&amp;g_a得到符号表里的地址。</p></li></ul><li><p>对于extern unsigned int __bss_start变量</p></li><ul><li><p>要得到符号表中的地址，也是使用&amp;__bss_start。</p></li></ul><li><p>对于extern char __bss_start[]变量</p></li><ul><li><p>要得到符号表中的地址，直接使用__bss_start[]，不需要加&amp;</p></li><li><p>为什么？`__bss_start本身就表示地址啊</p></li></ul></ul><div><br/></div><div><br/></div></span>
+</div></body></html> 

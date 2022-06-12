@@ -1,0 +1,268 @@
+<html>
+<head>
+  <title>【2】04FreeRTOS快速入门C</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/605138 (zh-CN, DDL); Windows/10.0.0 (Win64); EDAMVersion=V2;"/>
+  <meta name="content-class" content="yinxiang.superNote"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+<body>
+<a name="4620"/>
+<h1>【2】04FreeRTOS快速入门C</h1>
+<div>
+<table bgcolor="#D4DDE5" border="0">
+<tr><td><b>创建时间：</b></td><td><i>2022/5/9 9:56</i></td></tr>
+<tr><td><b>更新时间：</b></td><td><i>2022/5/16 21:32</i></td></tr>
+<tr><td><b>作者：</b></td><td><i>gi51wa2j</i></td></tr>
+<tr><td><b>标签：</b></td><td><i>bingo, FreeRTOS快速入门, RTOS训练营, 正文</i></td></tr>
+</table>
+</div>
+<br/>
+
+<div><span><h1>1.同步互斥与通信概述</h1><h2>1.1概念</h2><div><b>同步：</b>等待A完成后B才可以继续往下走，即AB任务之间有依赖，需要A完成前，B等待A完成才执行的操作称为同步。</div><div><b>互斥：</b>A和B不能一起执行占用某个资源，即AB两任务之间都需要使用某个硬件资源，那么A执行时B不能抢占；</div><div><b>同步与互斥关系：</b>等待A运行完毕再运行B，A运行完之后提醒B运行，即表示<span style="color: #FF0000;"><b>使用同步完成了互斥的操作；</b></span></div><ul><li><div><span style="color: #000000;"><b>代码举例</b></span></div></li></ul><img src="【2】04FreeRTOS快速入门C_files/Image.png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="600px"/><h2>1.2同步（手写测试）CPU资源竞争测试</h2><div>通过全局变量flageCalcEnd来做标识符，使得任务1和任务2完成同步的效果，想让任务1执行完毕后再执行任务2.</div><div>但是这个过程中，任务2在不断地消耗cpu资源，在逻辑分析仪中可以看到，这是任务1执行完毕需要4s的时间，而对比注释掉与任务1抢占消耗CPU资源的任务2之后，<span style="color: #FF0000;"><b>消耗时间约减少了一半，仅2s。</b></span></div><img src="【2】04FreeRTOS快速入门C_files/Image [1].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="457.58940397350995px"/><img src="【2】04FreeRTOS快速入门C_files/Image [2].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="675px"/><img src="【2】04FreeRTOS快速入门C_files/Image [3].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="664.6517719013453px"/><div><b>解决方式：</b>使用<b>轮循</b>的方式实现同步的操作是有缺陷的，CPU不断的消耗资源，效率不高。因此在进入任务2的时刻使得任务2进入阻塞状态，不要消耗CPU资源即可，在各类RTOS中，都会完成这一步操作。</div><img src="【2】04FreeRTOS快速入门C_files/Image [4].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="869.7108008437611px"/><img src="【2】04FreeRTOS快速入门C_files/Image [5].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="836px"/><h2>1.3互斥（手写测试）</h2><div>对于互斥最常见的就是串口的信息打印，需要互斥的去使用，不然容易造成不同信息的打印混在一起，无法识别。</div><div><span style="color: #FF0000;"><b>这里编写一个串口打印函数，然后分别被不同的任务调用：</b></span></div><div>串口打印过程中会被打断，所以对程序进行改进。</div><img src="【2】04FreeRTOS快速入门C_files/Image [6].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="【2】04FreeRTOS快速入门C_files/Image [7].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="689px"/><ul><li><div>改造后的程序，<b>注意那个Delay1ms的语句，</b>如果没有延时，则在运行的过程中，任务4先执行，执行的时候回不断把标识符flagUARTused刷新为1，这个速度很快，导致任务3每次都竞争不过任务4，因此延时1ms，即一个tick给任务3让位。</div></li></ul><img src="【2】04FreeRTOS快速入门C_files/Image [8].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="395.6354813061172px"/><img src="【2】04FreeRTOS快速入门C_files/Image [9].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="422.1805905041942px"/><ul><li><div><b>缺陷：在多任务系统中使用全局变量判断有隐患，如果在if判断中发生任务的切换，那么if的判断就会失效，导致程序概率性的出现问题。问题在于判断和设置语句之间的时间太长了。</b></div></li></ul><h1>2.FreeRTOS（通信方式）对于同步和互斥的解决方式</h1><div>原则在于保证正确性，使得等待者进入阻塞状态。</div><ul><li><div><b>队列queue FIFO</b></div></li></ul><img src="【2】04FreeRTOS快速入门C_files/Image [10].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><ul><li><div><b>事件组</b></div></li></ul><img src="【2】04FreeRTOS快速入门C_files/Image [11].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><ul><li><p><b>信号量</b></p></li></ul><img src="【2】04FreeRTOS快速入门C_files/Image [12].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><ul><li><div><b>任务通知</b></div></li></ul><img src="【2】04FreeRTOS快速入门C_files/Image [13].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><ul><li><div><b>互斥量</b></div></li></ul><div>（信号量只有1位的信号量，使用互斥量的同时还会有优先级反转的问题，使用优先级继承的方式来解决）</div><img src="【2】04FreeRTOS快速入门C_files/Image [14].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h1>3.队列Queue的理论讲解（<span style="color: #FF0000;">先进先出</span>）</h1><div><span style="font-size: 13pt;"><span style="color: #FF0000;"><b>队列(queue)可以用于&quot;任务到任务&quot;、&quot;任务到中断&quot;、&quot;中断到任务&quot;直接传输信息。并且可以实现同步、互斥操作；</b></span></span></div><img src="【2】04FreeRTOS快速入门C_files/Image [15].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="646px"/><img src="【2】04FreeRTOS快速入门C_files/Image [16].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="791.7849216063064px"/><h3>3.0.1 队列的形态_环形缓冲区</h3><div><a href="evernote:///view/38694434/s14/d497b0c6-eb79-4216-aff4-4fa61b7b6e2f/d497b0c6-eb79-4216-aff4-4fa61b7b6e2f/" rev="en_rl_none">【1】02_项目必备的HAL基础</a>查看该笔记中对于环形缓冲区的讲解；</div><div><span style="color: #9B00FF;"><b>队列本质是一个环形缓冲区，再加上任务的休眠和唤醒</b></span></div><img src="【2】04FreeRTOS快速入门C_files/kvhswz2s0m5e.jpg" type="image/jpeg" data-filename="kvhswz2s0m5e.jpg" style="--en-uploadstate:uploaded;" width="622px"/><img src="【2】04FreeRTOS快速入门C_files/Image [17].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="592px"/><ul><li><div><b>环形缓冲区的特点</b></div></li><ul><li><div>有读写位置</div></li><li><div>写到buff的尾部后，要绕到头部</div></li><li><div>读到buff的尾部后，要绕到头部</div></li></ul><li><div><b>环形缓冲区的读写方式，假设数组一开始没有数据。r=w=0；</b></div></li><ul><li><div>写数据</div></li></ul></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">buf[w] = val;
+w = (w+1);
+if (w == 4)   
+  w = 0;</div><div style="--en-blockquote:true;box-sizing: border-box; padding-left: 19px; padding-top: 6px; padding-bottom: 6px; border-left: 3px solid #b4c0cc; background-position: initial initial; background-repeat: initial initial; margin-top: 6px"><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">刚写的位置等于4的时候（判断下一位有没有空间），就把它复位为0，即从尾部绕到头部，</span></span></span></span></div></div><img src="【2】04FreeRTOS快速入门C_files/kvhsx0dk05ua.jpg" type="image/jpeg" data-filename="kvhsx0dk05ua.jpg" style="--en-uploadstate:uploaded;" width="382px"/><ul><ul><li><div>读数据</div></li></ul></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">val = buf[r];
+r = r + 1;
+if (r == 4)   
+  r = 0;</div><h3>3.0.2 队列的数据传输</h3><div style="--en-callout:true;"><div><b>通常情况下：</b><span style="color: #FF0000;"><b>写数据放到尾部，读数据从头部读</b></span></div></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">一个任务写对队列，另外一个任务读队列。</span></span></span></span></div><img src="【2】04FreeRTOS快速入门C_files/kvhsx1mo0f9n.jpg" type="image/jpeg" data-filename="kvhsx1mo0f9n.jpg" style="--en-uploadstate:uploaded;" width="706px"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">有同学对头和尾很容易混淆，在上面那个队列里我写了两个数据，红色斜线表示有数据。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">第1个数据放在头部那里，第2个数据在尾部旁边。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">要读数据的时候，先读第1个数据，就是从头部读。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">假设读到了一个数据，头、尾就是这样的：</span></span></span></span></div><img src="【2】04FreeRTOS快速入门C_files/kvhsx1n30e8g.jpg" type="image/jpeg" data-filename="kvhsx1n30e8g.jpg" style="--en-uploadstate:uploaded;" width="706.5186440677966px"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">这时候如果我再写一个数据，头和尾就是这样的：</span></span></span></span></div><img src="【2】04FreeRTOS快速入门C_files/kvhsx1qy0r0i.jpg" type="image/jpeg" data-filename="kvhsx1qy0r0i.jpg" style="--en-uploadstate:uploaded;" width="706.5186440677966px"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">对于队列操作，我们一般来说是往尾部上写数据，</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">但是你也可以说：我这个数据比较着急处理，我可以写到头部去。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">但</span></span><span style="color: #9B00FF;"><b><span style="font-weight: 400;">读数据的时候，永远是从头部读。</span></b></span></span></span></div><h2>3.1 队列结构的猜测</h2><ul><li><div>首先需要一个<b>buf指针来指向一个真正的内存，存放数据</b></div></li><li><div>任务CD在等待队列数据的过程中不应该竞争CPU资源，所以需要进入阻塞状态，因此需要一个list链表来<b>存放等待数据的任务。</b></div></li><li><div>如果队列被填写满，并且不想覆盖数据，那么还<b>需要一个list来存放等待存储空间的任务。</b></div></li><li><div><b>管理环形缓冲区的头，尾部指针</b></div></li><li><div><b>队列中item的大小</b></div></li><li><div><b>其他辅助成员</b></div></li></ul><h3>3.1.1 队列结构体<span style="color: #FF0000;"><b>代码证实：</b></span></h3><div><br/></div><img src="【2】04FreeRTOS快速入门C_files/kvhsx0hr0ltk.jpg" type="image/jpeg" data-filename="kvhsx0hr0ltk.jpg" style="--en-uploadstate:uploaded;" width="618.2083246231078px"/><img src="【2】04FreeRTOS快速入门C_files/kvhsx0lj0u48.jpg" type="image/jpeg" data-filename="kvhsx0lj0u48.jpg" style="--en-uploadstate:uploaded;" width="748.6849315068494px"/><img src="【2】04FreeRTOS快速入门C_files/Image [18].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="631px"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><b>在以前讲环形缓冲区的时候，有同学问过一个问题：能不能够创建一个通用的环形缓冲区？可以用来传递任意大小的数据。</b></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">可以，</span></span><span style="color: #FF0000;"><span style="font-weight: 400;">队列就是：你可以指定这个环形缓冲区里每一个元素多大，有多少个元素。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">可以看到，它创建一个队列的时候，会去创建一个结构体</span></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">Queue_t</span></span></span></span></span><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">，还会去分配保存数据的空间:</span></span></span></span></div><img src="【2】04FreeRTOS快速入门C_files/kvhsx0zi0nim.jpg" type="image/jpeg" data-filename="kvhsx0zi0nim.jpg" style="--en-uploadstate:uploaded;" width="858.6328139760619px"/><img src="【2】04FreeRTOS快速入门C_files/kvhsx1je0y2z.jpg" type="image/jpeg" data-filename="kvhsx1je0y2z.jpg" style="--en-uploadstate:uploaded;" width="754px"/><div><br/></div><h2>3.2 创建队列</h2><div>队列的创建有两种方法：动态分配内存、静态分配内存，</div><ul><li><p>动态分配内存：xQueueCreate，队列的内存在函数内部动态分配</p></li></ul><p>函数原型如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">QueueHandle_t xQueueCreate( UBaseType_t uxQueueLength, UBaseType_t uxItemSize );</div><img src="【2】04FreeRTOS快速入门C_files/Image [19].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="746.9071856287425px"/><ul><li><div>静态分配内存：xQueueCreateStatic，队列的内存要事先分配好</div></li></ul><div>函数原型如下：</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">QueueHandle_t xQueueCreateStatic(
+                            UBaseType_t uxQueueLength,
+                            UBaseType_t uxItemSize,
+                            uint8_t *pucQueueStorageBuffer,
+                            StaticQueue_t *pxQueueBuffer
+                          );</div><img src="【2】04FreeRTOS快速入门C_files/Image [20].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="674.6330417665113px"/><ul><li><div>示例 </div></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">	// 示例代码
+#define QUEUE_LENGTH 10
+#define ITEM_SIZE sizeof( uint32_t )
+
+	// xQueueBuffer用来保存队列结构体
+	StaticQueue_t xQueueBuffer;
+
+	// ucQueueStorage 用来保存队列的数据
+	// 大小为：队列长度 * 数据大小
+	uint8_t ucQueueStorage[ QUEUE_LENGTH * ITEM_SIZE ];
+	void vATask( void *pvParameters )
+	{
+		QueueHandle_t xQueue1;
+		// 创建队列: 可以容纳QUEUE_LENGTH个数据，每个数据大小是ITEM_SIZE
+		
+		xQueue1 = xQueueCreateStatic( QUEUE_LENGTH,
+									ITEM_SIZE,
+									ucQueueStorage,
+									&amp;xQueueBuffer );
+    }</div><h2>3.3 复位队列——初始化</h2><div>队列刚被创建时，里面没有数据，使用过程中可以调用xQueueReset（）把队列恢复为初始状态，此函数原型为：</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/* pxQueue : 复位哪个队列;
+*  返回值: pdPASS(必定成功)
+*/
+BaseType_t xQueueReset( QueueHandle_t pxQueue);</div><h2>3.4删除队列（仅动态创建的）</h2><div>删除队列的函数为xQueueDelete（），只能<b>删除动态方法创建的队列,</b>它会释放内存，函数原型如下</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">void vQueueDelete( QueueHandle_t xQueue );</div><h2>3.5 写队列</h2><div>可以把数据写到队列头部，也可以写到尾部，这些函数有两个版本：在任务中使用、在ISR中使用。函数原型如下</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/* 等同于xQueueSendToBack
+* 往队列尾部写入数据（这些直接写入的是数值，注意参数），如果没有空间，阻塞时间为xTicksToWait
+*/
+BaseType_t xQueueSend(
+                    QueueHandle_t xQueue,
+                    const void *pvItemToQueue,
+                    TickType_t xTicksToWait
+                  );
+
+
+/*
+* 往队列尾部写入数据，如果没有空间，阻塞时间为xTicksToWait
+*/
+BaseType_t xQueueSendToBack(
+                    QueueHandle_t xQueue,
+                    const void *pvItemToQueue,
+                    TickType_t xTicksToWait
+                  );
+
+
+/*
+* 往队列尾部写入数据，此函数可以在中断函数中使用，不可阻塞
+*/
+BaseType_t xQueueSendToBackFromISR(
+                    QueueHandle_t xQueue,
+                    const void *pvItemToQueue,
+                    BaseType_t *pxHigherPriorityTaskWoken
+                  );
+
+
+/*
+* 往队列头部写入数据，如果没有空间，阻塞时间为xTicksToWait
+*/
+BaseType_t xQueueSendToFront(
+                    QueueHandle_t xQueue,
+                    const void *pvItemToQueue,
+                    TickType_t xTicksToWait
+                  );
+
+
+/*
+* 往队列头部写入数据，此函数可以在中断函数中使用，不可阻塞
+*/
+BaseType_t xQueueSendToFrontFromISR(
+                    QueueHandle_t xQueue,
+                    const void *pvItemToQueue,
+                    BaseType_t *pxHigherPriorityTaskWoken
+                  );</div><div>这些函数用到的参数是类似的，统一说明如下：</div><img src="【2】04FreeRTOS快速入门C_files/Image [21].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="624.8813713292448px"/><div><br/></div><div>     <b>所谓等待时间就是将任务放入等待链表</b></div><ul><li><div><b>举例：xQueueSendToFront函数是在缓冲区头部写入两个数据</b></div></li></ul><div><b>假设buf有两个数据，根据pcReadFrom-uxItemSize，然后再开始写入数据，写入buf头部，方便读取</b></div><img src="【2】04FreeRTOS快速入门C_files/Image [22].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="600.9932034995743px"/><h2>3.6 读操作</h2><div><span style="color: #FF0000;"><b>使用xQueueReceive()函数读队列，读到一个数据后，队列中该数据会被移除</b></span>。这个函数有两个版本：在任务中使用、在ISR中使用。函数原型如下：</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">BaseType_t xQueueReceive( 
+                        QueueHandle_t xQueue,
+                        void * const pvBuffer,
+                        TickType_t xTicksToWait 
+                      );
+
+BaseType_t xQueueReceiveFromISR(
+                        QueueHandle_t xQueue,
+                        void *pvBuffer,
+                        BaseType_t *pxTaskWoken
+                      );</div><img src="【2】04FreeRTOS快速入门C_files/Image [23].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="705px"/><div><span style="color: #FF0000;"><b>注意，读数据时，并不是从pcHead开始读取，pcHead指针不会变，永远指向buf的首地址不会变。读取的位置存放在联合体的xQueue的pcReadFrom里面，初始化时指向缓冲区末尾，当需要读取数据的时候，pcReadFrom指针就需要+ uxItemSize来到达当前需要读写的位置（下一个读写的位置），超过尾部时自动前往头部（环形缓冲区的概念）。</b></span></div><img src="【2】04FreeRTOS快速入门C_files/Image [24].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="936px"/><h2>3.7 查询</h2><div>可以查询队列中有多少个数据，有多少空余空间，函数原型如下：</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">
+/*
+* 返回队列中可用数据的个数
+*/
+UBaseType_t uxQueueMessagesWaiting( const QueueHandle_t xQueue );
+/*
+* 返回队列中可用空间的个数
+*/
+UBaseType_t uxQueueSpacesAvailable( const QueueHandle_t xQueue );</div><h2>3.8 覆盖/偷看</h2><div>当队列长度为1时，可以使用xQueueOverwrite()或xQueueOverwriteFromISR()来覆盖数据。  注意，队列长度必须为1。当队列满时，这些函数会覆盖里面的数据，这也以为着这些函数不会被阻塞。  函数原型如下</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/* 
+覆盖队列
+* xQueue: 写哪个队列
+* pvItemToQueue: 数据地址
+* 返回值: pdTRUE表示成功, pdFALSE表示失败
+*/
+BaseType_t xQueueOverwrite(
+                          QueueHandle_t xQueue,
+                          const void * pvItemToQueue
+                        );
+BaseType_t xQueueOverwriteFromISR(
+                          QueueHandle_t xQueue,
+                          const void * pvItemToQueue,
+                          BaseType_t *pxHigherPriorityTaskWoken
+                        );</div><div><b>如果想让队列中的数据供多方读取，也就是说读取时不要移除数据，要留给后来人。那么可以使用</b><span style="color: #FF0000;"><b>&quot;窥  视&quot;</b></span><b>，</b>也就是<b>xQueuePeek()</b>或<b>xQueuePeekFromISR()</b>。</div><div>这些函数会从队列中复制出数据，但是不移除数据。这也意味着，如果队列中没有数据，那么&quot;偷看&quot;时会导致阻塞；一旦队列中有数据，以后每次&quot;偷看&quot;都会成功。  </div><div>函数原型如下：</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/* 偷看队列
+* xQueue: 偷看哪个队列
+* pvItemToQueue: 数据地址, 用来保存复制出来的数据
+* xTicksToWait: 没有数据的话阻塞一会
+* 返回值: pdTRUE表示成功, pdFALSE表示失败
+*/
+BaseType_t xQueuePeek(
+                  QueueHandle_t xQueue,
+                  void * const pvBuffer,
+                  TickType_t xTicksToWait)
+                  ;
+
+BaseType_t xQueuePeekFromISR(
+                  QueueHandle_t xQueue,
+                  void *pvBuffer,
+                );</div><h2>3.9 多个任务读写队列等待时唤醒哪一个？</h2><div><b>问题：很多任务准备写队列或者读队列，那么必定有任务放在就绪链表中，到时候根据什么来唤醒下一个执行的任务？</b></div><div style="--en-callout:true;"><div><b>唤醒任务根据优先级</b></div></div><div><span style="font-size: 12pt;"><span style="color: #FF0000;"><b>在我们设置等待时间的时候，如果有多个写入数据或接收数据的任务，那么率先唤醒的是优先级最高的任务，如果优先级相同的话，那么唤醒的任务就是等待时间最长的任务（先来后到）。</b></span></span></div><h1>4.队列Queue的常规使用</h1><div>以下列程序为例，如果创建两个任务，使用全局变量来完成同步的操作，任务2明明需要等待任务1的执行后才可以继续运行，但是却每次tick中断都参与CPU的运行进行运算判断，浪费CPU的资源，这里进行优化。</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">static int sum = 0;
+static volatile int flagCalcEnd = 0;
+
+void Task1Function(void * param)
+{
+	volatile int i = 0;
+	while (1)
+	{
+		for (i = 0; i &lt; 10000000; i++)
+			sum++;
+		//printf(&quot;1&quot;);
+		flagCalcEnd = 1;
+		vTaskDelete(NULL);
+	}
+}
+
+void Task2Function(void * param)
+{
+	while (1)
+	{
+		if (flagCalcEnd)
+			printf(&quot;sum = %d\r\n&quot;, sum);
+	}
+}</div><img src="【2】04FreeRTOS快速入门C_files/Image [25].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="792px"/><div><span style="color: #FF0000;"><b>优化方式：</b></span><b>任务1计算完数值之后讲数值写入队列，然后任务2读取队列，队列中有数据任务2就进入就绪状态，队列中没有数据时，任务2就进行阻塞状态，不参与CPU的调度。</b></div><h2>4.1 队列实现同步的效果</h2><ul><li><div>任务1</div></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">static int sum = 0;							  //求和
+static volatile int flagCalcEnd = 0;          //程序执行时间判断使用flag
+static QueueHandle_t xQueueCalHandle;		  //多实用的队列定义
+
+void Task1Function(void * param)
+{
+	volatile int i = 0;
+	while (1)
+	{
+		for (i = 0; i &lt; 10000000; i++) //创建一个长时间的一个执行任务
+			sum++;
+		flagCalcEnd = 1; 			   //长时间任务执行完毕标记flag，等待一会（等待任务切换）队列读取到数据后，任务2开始执行，任务2执行期间flag=0，执行结束后flag=1
+		xQueueSend(xQueueCalHandle, &amp;sum, portMAX_DELAY);
+		//注意这里是从地址上拷贝了数值到队列，后续sum增加不会改变队列中sum的值
+		sum = 1;                      //最后打印结果为sum = 10000000，这次添加不影响结果，后续打印为10000001则是由于这次的赋值效果。
+	}
+}</div><ul><li><div>任务2</div></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">void Task2Function(void * param)
+{
+	int val;
+	while (1)
+	{
+		flagCalcEnd = 0;//使用该变量来观察task1执行的时间，0表示任务1在执行数据
+		xQueueReceive(xQueueCalHandle, &amp;val, portMAX_DELAY);
+		flagCalcEnd = 1;//等于1 得到在任务中的等待时间
+			printf(&quot;sum = %d\r\n&quot;, val);
+	}
+}</div><ul><li><div>main函数中</div></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">	xQueueCalHandle = xQueueCreate(2, sizeof(int));			//创建长度为2，大小为sizeof（int）字节的队列
+	if(xQueueCalHandle == NULL)
+	{
+		printf(&quot;can not creat queue\r\n&quot;);
+	}
+
+	xTaskCreate(Task1Function, &quot;Task1&quot;, 100, NULL, 1, &amp;xHandleTask1);
+	xTaskCreate(Task2Function, &quot;Task2&quot;, 100, NULL, 1, NULL);</div><img src="【2】04FreeRTOS快速入门C_files/Image [26].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="589.0649350649351px"/><img src="【2】04FreeRTOS快速入门C_files/Image [27].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h2>4.2 队列实现互斥效果</h2><div><b>互斥的本质在于避免资源的竞争，同样的资源有时无法让两个消费者同时使用，所以需要在一个消费者使用时对另一个消费者说明情况；</b></div><div><span style="color: #FF0000;"><b>程序的思想是使用队列在任务有数据时即可执行任务，任务没有数据时进入阻塞状态等待任务。</b></span></div><ul><ul><li><div><span style="color: #FF0000;"><b>例程的目的在于实现串口的互斥，即任务4使用串口时任务3无法使用串口，需要等待任务4执行完毕后才可以使用。</b></span><span style="color: #9B00FF;"><b>站在任务的角度，对情况进行拆分。</b></span></div></li><ul><li><div><span style="color: #9B00FF;"><b>创建队列：</b></span><b>用来实现功能</b></div></li><li><div><span style="color: #9B00FF;"><b>加锁：</b></span><b>读取队列头部数据，队列被读取的数据被移除。任务进入就绪状态，开始执行，此时队列的数据为空，后续任务读取不到数据就需要进入阻塞状态等待。</b></div></li><li><div><span style="color: #9B00FF;"><b>解锁：</b></span><b>写入队列尾部数据，在队列尾部写入数据，使得队列中有数据可以被下一个任务读取，即下一个读取队列数据的任务可以从阻塞状态进入就绪（运行）状态。</b></div></li></ul></ul><li><div><b>互斥操作构建</b></div></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">QueueHandle_t xQueueUARTHandle;
+
+
+int InitUARTLock(void)
+{
+	int val;
+	xQueueUARTHandle = xQueueCreate(1, sizeof(int));    //创建队列
+	if(xQueueUARTHandle == NULL )
+	{
+		printf(&quot;Can not create queue\r\n&quot;);
+		return -1;
+	}
+	xQueueSend(xQueueUARTHandle, &amp;val, portMAX_DELAY);  //随便向队列写入一个数据
+	return 0;
+}
+
+void GetUARTLock(void)      //给UART加锁，读取（并移除）队列中的数据，使得其他任务读取队列时发现里面没有数据，就开始进行等待，进入阻塞状态
+{
+	int val;
+	xQueueReceive(xQueueUARTHandle, &amp;val, portMAX_DELAY); 
+}
+
+void ReleaseUARTLock(void)   //给UART解锁，向队列中写入数据。使得其他任务读取队列时发现队列中有数据，就获得信号，目前可以使用该资源（函数）
+{
+	int val;
+	xQueueSend(xQueueUARTHandle, &amp;val, portMAX_DELAY);
+}</div><ul><li><div><b>串口发送任务（</b><span style="color: #FF0000;"><b>被调用函数中需要确保当前只被一个任务调用，其他任务无法使用</b></span><b>）</b></div></li></ul><div style="--en-blockquote:true;box-sizing: border-box; padding-left: 19px; padding-top: 6px; padding-bottom: 6px; border-left: 3px solid #b4c0cc; background-position: initial initial; background-repeat: initial initial; margin-top: 6px"><div><b>打印非常消耗时间，如果不使用互斥操作避免同时打印，那么在打印的过程中会被切换到其他打印任务执行，导致打印顺序出现紊乱。</b></div></div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">void TaskGenericFunction(void * param)
+{
+	while (1)
+	{
+		GetUARTLock();           //加锁
+		printf(&quot;%s\r\n&quot;, (char *)param);
+		ReleaseUARTLock();		//解锁
+		vTaskDelay(1);           //重要，这里需要给任务3让步使其从就绪状态进入运行状态，具体查看后续解释
+	}
+}</div><ul><li><div><b>main函数</b></div></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">int main( void )
+{
+#ifdef DEBUG
+  debug();
+#endif
+
+	prvSetupHardware();
+
+	printf(&quot;Hello, world!\r\n&quot;);
+
+	InitUARTLock();
+
+	xTaskCreate(TaskGenericFunction, &quot;Task3&quot;, 100, &quot;Task 3 is running&quot;, 1, NULL);       //任务3和4都使用串口打印了信息，调用了同一个串口打印函数
+	xTaskCreate(TaskGenericFunction, &quot;Task4&quot;, 100, &quot;Task 4 is running&quot;, 1, NULL); 		//任务4先执行
+
+	/* Start the scheduler. */
+	vTaskStartScheduler();
+
+	/* Will only get here if there was not enough heap space to create the
+	idle task. */
+	return 0;
+}</div><div style="--en-callout:true;"><div><b>队列互斥中的延时解释</b></div></div><img src="【2】04FreeRTOS快速入门C_files/Image [28].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="439.90384615384613px"/><div>这里处理让当前执行的任务进入阻塞状态延时1tick外以让出任务4使用的CPU资源，还有其他的几种处理方式；</div><img src="【2】04FreeRTOS快速入门C_files/Image [29].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="730px"/><h2>4.3 队列的加深理解</h2><div style="--en-blockquote:true;box-sizing: border-box; padding-left: 19px; padding-top: 6px; padding-bottom: 6px; border-left: 3px solid #b4c0cc; background-position: initial initial; background-repeat: initial initial; margin-top: 6px"><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><b><span style="font-weight: 400;">task2读队列，因为没有数据正在休眠，</span></b></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><b><span style="font-weight: 400;">task1写队列，</span></b></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><b><span style="font-weight: 400;">task2优先级比task1高</span></b></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><b><span style="font-weight: 400;">task2会立刻被唤醒、立刻执行</span></b></span></span></span></div></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><b>任务2在等待数据，任务1写数据后，他怎么知道要去唤醒任务2？他怎么知道任务2在等待数据？</b></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">看看队列的结构体，里面有2个链表：</span></span></span></span></div><img src="【2】04FreeRTOS快速入门C_files/kvhsx2gh09es.jpg" type="image/jpeg" data-filename="kvhsx2gh09es.jpg" style="--en-uploadstate:uploaded;" width="928.9207637689436px"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><b>一个是用来管理那些等待空闲以便写入数据的任务，</b></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><b>另一个用来管理那些等待数据以便读出数据的任务。</b></span></span></span></div><div><br/></div><div><span style="font-weight: 400;">task2读队列，因为没有数据而休眠，并且会把自己放在队列的这个链表上：</span><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">xTasksWaitingToReceive</span></span><span style="font-weight: 400;">。</span></div><div style="text-align:start;"><span style="font-weight: 400;">task1写队列，会去队列的这个链表：</span><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">xTasksWaitingToReceive</span></span><span style="font-weight: 400;">，挑出一个任务把它唤醒。</span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: #FF0000;"><b><span style="font-weight: 400;">任务的切换，就是把任务放在不同的链表，再来分析task2读队列时：</span></b></span></span></span></div><ol><li><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">因为没有数据而休眠 ==&gt; 从ready list放到delay list</span></span></span></span></div></li></ol><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">  放入delay list是因为，可能它并不想死等，还给自己规定了超时时间，</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">  时间到了，tick中断要从delay list把它唤醒。</span></span></span></span></div><ol start="2"><li><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">并且会把自己放在队列的这个链表上</span></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">xTasksWaitingToReceive</span></span></span></span></span></div></li></ol><div><br/></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">即</span><span style="font-weight: bold;">一个任务，想去读队列，但是队列里没有数据，就休眠：会把自己放入两个链表</span><span style="font-weight: 400;">。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">我们再来看看任务1，任务2读不到数据就休息了，任务1写数据后发生了什么事？</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">task1写队列，会去队列的这个链表：</span></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">xTasksWaitingToReceive</span></span></span></span></span><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">，挑出一个任务把它唤醒?</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">在等待数据的链表</span></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">xTasksWaitingToReceive</span></span></span></span></span><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">，有很多个任务，有的优先级高，有的等待时间长。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">谁优先级高唤醒谁，</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">如果优先级都相同，谁等待时间长，就唤醒谁。</span></span></span></span></div><div><br/></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">刚举的例子是：任务二想去读数据，没有数据就休眠。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">反过来也是一样的：任务1想去写队列，队列已经满了，他也可以休眠等待。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">等待什么？等待别的任务去读队列，空出一个空间。</span></span></span></span></div><div><br/></div><img src="【2】04FreeRTOS快速入门C_files/kvhsx34706ul.jpg" type="image/jpeg" data-filename="kvhsx34706ul.jpg" style="--en-uploadstate:uploaded;" width="1142.8039050689974px"/><h2>4.4 示例</h2><div style="--en-blockquote:true;box-sizing: border-box; padding-left: 19px; padding-top: 6px; padding-bottom: 6px; border-left: 3px solid #b4c0cc; background-position: initial initial; background-repeat: initial initial; margin-top: 6px"><div>详细操作查看韦老师的FreeRTOS完全开发手册册</div></div><ul><li><div>队列的基本使用</div></li><ul><li><div>创建队列发送队列</div></li></ul><li><div>分辨数据源</div></li><li><div>传输大块数据</div></li><li><div>邮箱</div></li></ul><h1>5.队列的写深入理解</h1><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">我们要关注的是这个图片里面黄色的那两个变量;</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">一个是写位置：</span></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">pcWriteTo</span></span></span></span></span><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">，另一个是读位置：</span></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">pcReadFrom</span></span></span></span></span><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">。</span></span></span></span></div><img src="【2】04FreeRTOS快速入门C_files/kvkj9xbx0342.jpg" type="image/jpeg" data-filename="kvkj9xbx0342.jpg" style="--en-uploadstate:uploaded;" width="711.525934516059px"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">怎么写数据呢？假设初始情况和写了一个数据后，分别如下：</span></span></span></span></div><img src="【2】04FreeRTOS快速入门C_files/kvkj9xby0ut9.jpg" type="image/jpeg" data-filename="kvkj9xby0ut9.jpg" style="--en-uploadstate:uploaded;" width="721.4076244520105px"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">1.写到哪里去？</span></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">pcWriteTo</span></span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">2.写完之后，</span></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">pcWriteTo</span></span></span></span></span><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">指向下一个位置</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">那怎么读数据？假设初始情况和写了一个数据后，分别如下：</span></span></span></span></div><img src="【2】04FreeRTOS快速入门C_files/kvkj9xby01hw.jpg" type="image/jpeg" data-filename="kvkj9xby01hw.jpg" style="--en-uploadstate:uploaded;" width="559.4454428754814px"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">1.</span></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">pcReadFrom</span></span></span></span></span><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">先调整为指向下一个位置</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">2.再从</span></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">pcReadFrom</span></span></span></span></span><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">读出一个元素</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">读出数据之后，数据还保存在队列里， 但是指针位置变了，所以之前的那些数据并不会再次读出来，也就相当于之前的数据被废弃了。</span></span></span></span></div><h1>6.队列知识问答</h1><img src="【2】04FreeRTOS快速入门C_files/Image [30].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="658px"/><img src="【2】04FreeRTOS快速入门C_files/Image [31].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div style="--en-callout:true;"><div>触发调度不是等待Tick中断的调度</div></div><img src="【2】04FreeRTOS快速入门C_files/Image [32].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="975.5520833333334px"/><img src="【2】04FreeRTOS快速入门C_files/Image [33].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="924px"/><div><br/></div></span>
+</div></body></html> 

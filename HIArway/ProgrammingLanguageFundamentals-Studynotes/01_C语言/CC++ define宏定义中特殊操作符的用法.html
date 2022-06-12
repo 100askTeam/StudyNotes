@@ -1,0 +1,90 @@
+<html>
+<head>
+  <title>C/C++ define宏定义中特殊操作符的用法</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/605138 (zh-CN, DDL); Windows/10.0.0 (Win64); EDAMVersion=V2;"/>
+  <meta name="content-class" content="yinxiang.superNote"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+<body>
+<a name="4347"/>
+<h1>C/C++ define宏定义中特殊操作符的用法</h1>
+<div>
+<table bgcolor="#D4DDE5" border="0">
+<tr><td><b>创建时间：</b></td><td><i>2022/4/21 16:22</i></td></tr>
+<tr><td><b>更新时间：</b></td><td><i>2022/4/21 18:21</i></td></tr>
+<tr><td><b>作者：</b></td><td><i>gi51wa2j</i></td></tr>
+<tr><td><b>标签：</b></td><td><i>bingo, C, 细节知识</i></td></tr>
+</table>
+</div>
+<br/>
+
+<div><span><h1>1. （#）字符串化操作符</h1><h2>1.1 作用</h2><div>将宏定义中的传入参数转化为用一对双括号括起来的字符串，该过程称之为字符串化，其只能用于有传入参数的宏定义中。</div><h2>1.2 example</h2><h3>1.2.1 example1</h3><ul><li><div>code1</div></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">#include &lt;stdio.h&gt;
+
+#define ChangeCharacter(str) printf(&quot;测试输出：\n%s\n&quot;,str)
+
+int main()
+{
+       ChangeCharacter(&quot;Test character&quot;);
+       return 0;
+}</div><ul><li><div>output1</div></li></ul><img src="CC++ define宏定义中特殊操作符的用法_files/Image.png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h3>1.2.2 example2</h3><ul><li><div>code2</div></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">#include &lt;stdio.h&gt;
+
+#define ChangeCharacter(x) printf(#x&quot; = %d\n&quot;,(x))
+
+int main()
+{
+       ChangeCharacter(6);
+       ChangeCharacter(6+6);
+       return 0;
+}</div><ul><li><div>output1</div></li></ul><img src="CC++ define宏定义中特殊操作符的用法_files/Image [1].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h1>2.（##）粘贴操作符</h1><h2>2.1 作用</h2><div>合并宏定义中的两个标识符，使其成为一个独立的标识符。</div><div><a href="https://blog.csdn.net/miaomao1989/article/details/47621301" rev="en_rl_none">相关博客</a></div><h2>2.2 example</h2><ul><li><div>code</div></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">#include &lt;stdio.h&gt;
+
+#define ChangeCharacter(x) num##x
+
+int main()
+{
+       int num6 = 65;
+       int num = ChangeCharacter(6);
+       printf(&quot;%d&quot;, num);
+       
+       return 0;
+}
+</div><ul><li><div>output</div></li></ul><img src="CC++ define宏定义中特殊操作符的用法_files/Image [2].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h2>2.3 注意</h2><ul><li><div><b> 当用##连接形参时，##前后的空格可有可无</b></div></li></ul><div><b>如</b></div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">#define ChangeCharacter(x) num ## x</div><div>等同于</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">#define ChangeCharacter(x) num##x</div><ul><li><div><b>连接后的实际参数名，必须为实际已经存在的参数名或者编译器已知的宏定义</b></div></li><li><div><b>如果##后的参数本身也是一个宏，##会阻止这个宏的展开</b></div></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">#include &lt;stdio.h&gt;
+
+#define STRCPY(a, b) strcpy(a ## _p, #b)
+
+int main()
+{
+       char var1_p[20];
+       char var2_p[30];
+       strcpy(var1_p, &quot;aaaa&quot;);
+       strcpy(var2_p, &quot;bbbb&quot;);
+       STRCPY(var1, var2);
+       STRCPY(var2, var1);
+       printf(&quot;var1 = %s\n&quot;, var1_p);
+       printf(&quot;var2 = %s\n&quot;, var2_p);
+       //STRCPY(STRCPY(var1,var2),var2);
+       //这里是否会展开为： strcpy(strcpy(var1_p,&quot;var2&quot;)_p,&quot;var2“）？答案是否定的：
+       //展开结果将是：     strcpy(STRCPY(var1,var2)_p,&quot;var2&quot;)
+       //## 阻止了参数的宏展开!如果宏定义里没有用到 # 和 ##, 宏将会完全展开
+       // 把注释打开的话，会报错:implicit declaration of function 'STRCPY'
+       return 0;
+}
+</div><img src="CC++ define宏定义中特殊操作符的用法_files/Image [3].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h1>3. （__VA_AGRRS__）可变参数宏</h1><h2>3.1 作用</h2><div>__VA_ARGS__ 是一个可变参数宏，与省略号 ... 配合使用，用来替换省略号所代表的字符串。</div><div><a href="https://blog.csdn.net/mmcanyu/article/details/115600162" rev="en_rl_none">参考链接</a></div><h2>3.2 example</h2><ul><li><div>code</div></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">#include &lt;stdio.h&gt;
+
+#define ExampleOutut(...) printf(__VA_ARGS__)
+
+int main()
+{
+       int num6 = 65;
+       ExampleOutut(&quot;Number is %d\n&quot;, num6);
+       
+       return 0;
+}
+</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;"></div><ul><li><div>example</div></li></ul><img src="CC++ define宏定义中特殊操作符的用法_files/Image [4].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div><br/></div></span>
+</div></body></html> 

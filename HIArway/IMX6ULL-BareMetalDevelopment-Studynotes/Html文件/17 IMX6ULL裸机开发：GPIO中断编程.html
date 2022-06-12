@@ -1,0 +1,249 @@
+<html>
+<head>
+  <title>17 IMX6ULL裸机开发：GPIO中断编程</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/605138 (zh-CN, DDL); Windows/10.0.0 (Win64); EDAMVersion=V2;"/>
+  <meta name="content-class" content="yinxiang.superNote"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+<body>
+<a name="1496"/>
+<h1>17 IMX6ULL裸机开发：GPIO中断编程</h1>
+<div>
+<table bgcolor="#D4DDE5" border="0">
+<tr><td><b>创建时间：</b></td><td><i>2022/2/6 19:49</i></td></tr>
+<tr><td><b>更新时间：</b></td><td><i>2022/2/12 14:46</i></td></tr>
+<tr><td><b>作者：</b></td><td><i>gi51wa2j</i></td></tr>
+<tr><td><b>标签：</b></td><td><i>100ask_IMX6ULL_v11, bingo, 操作, 正文</i></td></tr>
+</table>
+</div>
+<br/>
+
+<div><span><div><br/></div><div style="--en-blockquote:true;box-sizing: border-box; padding-left: 19px; padding-top: 6px; padding-bottom: 6px; border-left: 3px solid #b4c0cc; background-position: initial initial; background-repeat: initial initial; margin-top: 6px"><div>在学习本章节之前，有必须先去了解学习下列知识，并结合韦东山老师的IMX6ULL裸机开发手册学习</div><div><a href="14 IMX6ULL裸机开发：异常处理（基础概念）.html" rev="en_rl_none">14 IMX6ULL裸机开发：异常处理（基础概念）</a></div><div><a href="16 IMX6ULL裸机开发：中断处理（属于一种异常）.html" rev="en_rl_none">16 IMX6ULL裸机开发：中断处理（属于一种异常）</a>          （重点了解GIC）</div><div>此外：值得注意的是需要了解向量表，以及中断程序的处理流程</div></div><h1>一、GPIO中断介绍（通用概念）</h1><div style="text-align:center;">中断也属于一种异常</div><ul><li><div><span style="color: #000000;">嵌入式系统中的异常情况</span></div></li></ul><div><span style="color: #FF0000;">CPU在运行过程中，也会被各种<b>异常</b>打断。这些<b>异常</b>有</span></div><p>① 指令未定义</p><p>② 指令、数据访问有问题</p><p>③SWI（软中断）</p><p>④ 快中断</p><p>⑤ 中断</p><ul><li><p>中断也属于一种异常，导致中断发生的<b><span style="font-weight: bold;">中断源</span></b>有很多，比如：</p></li></ul><p>① 按键</p><p>② 定时器</p><p>③ ADC转换完成</p><p>④ UART发生完数据、接收数据等等</p><p><br/></p><div>     这些众多的中断源，汇集于<b><span style="font-weight: bold;">中断管理器</span></b>，由中断管理器选择优先级最高的中断并通知CPU。CPU会根据中断的类型到跳转到不同的地址处理中断。发生中断后，CPU并不是随便跳到一个地址处理中断，而是根据<b><span style="font-weight: bold;">异常向量表</span></b>，跳转到对应的地址处理中断。</div><h2>1.1 GPIO 中断 </h2><div>     GPIO中断，指由GPIO模块产生的中断，有<b><span style="font-weight: bold;">边沿触发中断</span></b>或者<b><span style="font-weight: bold;">电平翻转中断</span></b>。GPIO模块能检测到引脚上电平的变化，并向中断控制器(GIC)发出中断信号，GIC再向CPU发出中断信号。框架如下图：</div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image.png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div><span style="color: #FF0000;"><b><span style="font-weight: bold;"> </span></b></span>    <span style="color: #FF0000;"><b><span style="font-weight: bold;">CPU在每执行完了条指令时会检查是否发生了中断，若是则会跳转到中断处理地址进行中断处理。</span></b></span>为了避免破坏主任务数据，CPU会处理保存当前相关寄存器（保存现场）并进入中断服务函数，执行完中断服务函数后，CPU会恢复相关寄存器（恢复现场），回到主任务继续执行程序。</div><div><br/></div><div>     <b>程序发生GPIO中断后会根据异常向量表强制跳转到0x18（IRQ中断地址）。如下图：</b></div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [1].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>     常向量表并不总是从0地址开始，IMX6ULL可以设置<b><span style="font-weight: bold;">vector base寄存器</span></b>，指定向量表在其他位置，比如设置 vector base 为 0x80000000，指定为 DDR 的某个地址。<b><span style="font-weight: bold;">但是表中的各个异常向量的偏移地址，是固定的</span></b>：复位向量偏移地址是 0，中断是 0x18。</div><h2>1.2 GIC中断控制器功能概述（IMX6ULL）</h2><p>     IMX6ULL是Cortex-A7内核，采用GIC V2（Generic Interrupt Controller）中断控制器。在这里只简单的介绍一下GIC，具体可以参考16节中GIC的阐述</p><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [2].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>     如上图所示，硬件中断信号发送到GIC（Generic Interrupt Controller），GIC产生一个FIQ或IRQ信号给CPU。</div><div>     在初始化中断时，要初始化这4部分：<b>产生中断的源头(GPIO模块或UART模块等)、GIC(内部有Distributor或CPU interface)、CPU本身(设置CPSR寄存器)</b>，如下图：</div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [3].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>     GIC的主要作用可以归结为接受硬件中断信号，并进行简单的处理，按照一定的设置策略，分给对应的CPU处理。如下图：</div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [4].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>       GIC可以通过四个信号向CPU核汇报中断情况：VIRQ（虚拟快速IRQ）、VFIQ（虚拟快速FIQ）、IRQ、FIQ。VIRQ、VFIQ是针对虚拟化，剩下就是IRQ和FIQ。GPIO中断属于IRQ中断，所以在本次实验中GIC上报IRQ信号给ARM内核。</div><h3>1.2.1 GIC的内部过程</h3><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [5].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div><b><span style="font-weight: bold;"> </span></b>    <b><span style="font-weight: bold;">中断源分为SPI（Shared Peripheral Interrupt）、PPI（Private Peripheral Interrupt）、SGI request（Software-generated Interrupt）</span></b>。<span style="color: #FF0000;">外部中断都属于SPI中断源。</span></div><p><b><span style="font-weight: bold;"> </span></b>    <b><span style="font-weight: bold;">GIC控制器包括分发器（Distributor）和CPU接口端（CPU interface）。</span></b></p><ul><li><p><b><span style="font-weight: bold;">分发器（Distributor）</span></b>主要完成对整个中断控制器使能，设置中断优先级，设置中断触发方式，决定每个中断信号发送到哪一个具体的CPU上执行。</p></li><li><p><b><span style="font-weight: bold;">CPU接口端（CPU interface）</span></b>主要完成使能和发送一个具体的中断信号到特定的CPU上，确认中断已被CPU接受、处理以及处理完成，设置CPU能接受中断的优先级以及基于级别的中断抢占。</p></li></ul><div>     中断信号先到达分发器，分发器根据该中断所设定的CPU，把中断发送到CPU对应的CPUinterface上；在CPUinterface里判断该中断的优先级是否足够高，能否抢断或打断当前的中端处理，如果可以，CPU interface就会发送一个物理的signa到CPU的IRQ线上；CPU接收到中断信号，转到中断处理模式进行处理。</div><h2>1.3 GIC中断寄存器（IMX6ULL）</h2><div>     GIC寄存器分为<b>Distributor register</b>和<b>CPU interface register</b>。寄存器数目较多，这里介绍本次实验中需要我们设置的寄存器。</div><p>     Distributor的寄存器名字中有“GICD_”前缀，CPU interface的寄存器名字中有“GICC_”前缀。</p><h3>1.3.1 <b><span style="font-weight: bold;">GICC_IAR寄存器</span></b></h3><div>     GICC_IAR寄存器属于CPU interface register，作用是：保存中断ID，读取GICC_IAR寄存器可以获得中断ID，这个过程可以当作对中断的确认。</div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [6].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><table cellspacing="0" style="--en-fitwindow:false;border-left:1px solid #d9d9d9;border-top:1px solid #d9d9d9;border-collapse:collapse;width:756px;" width="756px"><colgroup><col style="width: 113px;"></col><col style="width: 115px;"></col><col style="width: 125px;"></col><col style="width: 403px;"></col></colgroup><tbody><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>位域</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>名</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>读写</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>描述</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[31:13]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>-</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p> </p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>保留</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[12:10]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>CPUID</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>R</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>对于SGI类中断，它表示谁发出了中断。例如，值为3表示该请求是通过对CPU interface 3上的GICD_SGIR的写操作生成的。</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[9:0]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>Interrupt ID</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>R</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>中断ID</p></td></tr></tbody></table><h3>1.3.2 <b><span style="font-weight: bold;">GICC_EOIR寄存器</span></b></h3><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [7].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>     写此寄存器，表示某中断已经处理完毕。GICC_IAR的值表示当前在处理的中断，把GICC_IAR的值写入GICC_EOIR就表示中断处理完了。</div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [8].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><table cellspacing="0" style="--en-fitwindow:false;border-left:1px solid #d9d9d9;border-top:1px solid #d9d9d9;border-collapse:collapse;width:760px;" width="760px"><colgroup><col style="width: 190px;"></col><col style="width: 190px;"></col><col style="width: 190px;"></col><col style="width: 190px;"></col></colgroup><tbody><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>位域</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>名</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>读写</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>描述</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[31:13]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>-</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p> </p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>保留</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[12:10]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>CPUID</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>W</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>对于SGI类中断，它的值跟GICD_IAR. CPUID的相同。</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[9:0]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>EOIINTID</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>W</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>中断ID，它的值跟GICD_IAR里的中断ID相同</p></td></tr></tbody></table><h2>1.4 CP15协处理器及相关寄存器</h2><div style="--en-blockquote:true;box-sizing: border-box; padding-left: 19px; padding-top: 6px; padding-bottom: 6px; border-left: 3px solid #b4c0cc; background-position: initial initial; background-repeat: initial initial; margin-top: 6px"><div>这部分的指令，我们一般用现成的即可。此处了解该类知识</div></div><div><b><span style="font-weight: bold;"> </span></b>    <b><span style="font-weight: bold;">CP15协处理器介绍</span></b></div><p>     <b>在基于ARM的嵌入式系统中，存储系统通常是协处理器CP15完成的。</b>ARM处理器使用协处理器指令MCR和MRC来读写寄存器，控制cache、MMU、配置时钟（在bootloader时钟初始化时会用到）等。CP15包含16个32位寄存器，编号为0~15。</p><p>     在本次实验中，需要设置的寄存器有：<span style="color: #FF0000;">SCTLR（System Control Register）寄存器，VBAR（Vector Base Address）寄存器</span>。</p><h3>1.4.1 <b><span style="font-weight: bold;">SCTLR（System Control Register）寄存器</span></b></h3><div>设置SCTLR寄存器可以控制cache、MMU等。</div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [9].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [10].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [11].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [12].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [13].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>把上面的英文注释翻译成中文，如下表：</div><table cellspacing="0" style="--en-fitwindow:false;border-left:1px solid #d9d9d9;border-top:1px solid #d9d9d9;border-collapse:collapse;width:760px;" width="760px"><colgroup><col style="width: 190px;"></col><col style="width: 190px;"></col><col style="width: 190px;"></col><col style="width: 190px;"></col></colgroup><tbody><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>位域</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>名</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>读写</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>描述</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[13]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>V</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>R/W</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>向量位，用来设置向量表的基地址。</p><p>0：Low exception vectors，基地址为0；如果有VBAR寄存器，则使用它来指定向量表基地址；</p><p>1：High exception vectors，向量表基地址为0xFFFF0000</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[12]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>I</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>R/W</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>指令cache使能位</p><p>0：指令cache禁止，这是默认值</p><p>1：指令cache使能</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[11]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>Z</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>RAO/WI</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>分支预测使能位，当MMU使能时该位自动使能</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[2]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>C</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>R/W</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>数据cache使能位</p><p>0：数据cache禁止，这是默认值</p><p>1：数据cache使能</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[1]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>A</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>R/W</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>字节对齐设置位，</p><p>0：地址对齐检查禁止，这是默认值</p><p>1：地址对齐检查使能</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[0]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>M</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>R/W</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>MMU使能位，</p><p>0：MMU禁止，这是默认值；</p><p>1：MMU使能</p></td></tr></tbody></table><div>可以使用以下指令读写SCTLR寄存器：</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">MRC p15, 0, &lt;Rt&gt;, c1, c0, 0 ;把SCTLR寄存器的值读到ARM寄存器Rt中。
+MRC p15, 0, &lt;Rt&gt;, c1, c0, 0 ;把ARM寄存器Rt的值写入SCTLR寄存器。</div><h3>1.4.2 <b><span style="font-weight: bold;">VBAR（Vector Base Address）寄存器</span></b></h3><div>     通过VBAR寄存器，可以设置异常向量表的映射地址。如果不把异常向量表的映射地址告诉CPU，在发生异常时，CPU就找不到异常向量表，就无法处理异常。</div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [14].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [15].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><table cellspacing="0" style="--en-fitwindow:false;border-left:1px solid #d9d9d9;border-top:1px solid #d9d9d9;border-collapse:collapse;width:760px;" width="760px"><colgroup><col style="width: 190px;"></col><col style="width: 190px;"></col><col style="width: 190px;"></col><col style="width: 190px;"></col></colgroup><tbody><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>位域</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>名</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>读写</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>描述</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[31:5]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>Vector_Base_Address</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>R/W</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>向量表基地址的b[31:5]，这也意味着这个地址的低5位全为0</p></td></tr></tbody></table><h1>二、GPIO中断寄存器介绍（针对IMX6ULL）</h1><h2>2.1 GPIOx_ICR1（GPIO interrupt configuration register1）</h2><div>GPIO中断配置寄存器1，用来配置GPIO中断1～15的触发类型。</div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [16].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><table cellspacing="0" style="--en-fitwindow:false;border-left:1px solid #d9d9d9;border-top:1px solid #d9d9d9;border-collapse:collapse;width:760px;" width="760px"><colgroup><col style="width: 190px;"></col><col style="width: 190px;"></col><col style="width: 190px;"></col><col style="width: 190px;"></col></colgroup><tbody><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>位域</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>名</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>读写</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>描述</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[2n+1:2n]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>ICRn</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>R/W</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>用来设置GPIO中断的触发类型，</p><p>00：低电平触发；</p><p>01：高电平触发；</p><p>10：上升沿触发；</p><p>11：下降沿触发</p></td></tr></tbody></table><div><span style="color: #FF0000;"><b>ICR0~ICR15对应GPIO interrupt 0-15。</b></span></div><h2>2.2 GPIOx_ICR2<b>（GPIO interrupt configuration register2）</b></h2><div>GPIO中断配置寄存器2，用来配置GPIO中断16～31的触发类型。</div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [17].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div><span style="color: #FF0000;"><b>与GPIOx_ICR1类似，ICR15~ICR31对应GPIO interrupt 16-31。</b></span></div><h2>2.3 GPIOx_IMR（ GPIO interrupt mask register）</h2><div>GPIO中断屏蔽寄存器，用来屏蔽或使能某个GPIO中断。</div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [18].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><table cellspacing="0" style="--en-fitwindow:false;border-left:1px solid #d9d9d9;border-top:1px solid #d9d9d9;border-collapse:collapse;width:760px;" width="760px"><colgroup><col style="width: 190px;"></col><col style="width: 190px;"></col><col style="width: 190px;"></col><col style="width: 190px;"></col></colgroup><tbody><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>位域</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>名</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>读写</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>描述</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[n]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>IMR</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>R/W</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>每一位对应一个GPIO中断，</p><p>0：中断被屏蔽</p><p>1：中断使能，未被屏蔽</p></td></tr></tbody></table><h2>2.4 GPIOx_ISR（ GPIO interrupt status register）</h2><div>GPIO中断状态寄存器，表示某个GPIO中断是否发生了。</div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [19].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><table cellspacing="0" style="--en-fitwindow:false;border-left:1px solid #d9d9d9;border-top:1px solid #d9d9d9;border-collapse:collapse;width:760px;" width="760px"><colgroup><col style="width: 190px;"></col><col style="width: 190px;"></col><col style="width: 190px;"></col><col style="width: 190px;"></col></colgroup><tbody><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>位域</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>名</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>读写</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>描述</p></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>[n]</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>ISR</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>R/W</p></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><p>每一位对应一个GPIO中断，跟GPIO_IMR无关，就是说即使屏蔽了某个中断，还是可以在本寄存器中观察它的状态。</p><p>读：</p><p>0：中断未发生；</p><p>1：中断已发生。</p><p>写：某位写入1时，清零该位。</p></td></tr></tbody></table><h2>2.5 GPIOx_EDGE_SEL（GPIO edge select register）</h2><div>GPIO中断边沿选择寄存器，它可以用来覆盖GPIOx_ICR1/2中的配置值。</div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [20].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>每一位对应一个GPIO中断，一旦设置了GPIO_EDGE_SEL[n]时，GPIO会忽略ICR [n]设置，GPIO interrupt n的触发类型就是双边沿触发。</div><h1>三、按键中断程序编程流程及示例</h1><div>100ASK_IMX6ULL有2个按键，本节程序将设置它们的中断处理函数，在按键被按下或松开时进行打印；另外，还可以用KEY1来操作LED。</div><p>程序的总体流程是：</p><p>① 在中断向量中，保存现场，调用处理函数，恢复现场；</p><p>② 初始化：为KEY1、KEY2设置处理函数；初使化GPIO模块、初始化GIC；</p><p>③ 准备好一切之后，使能中断。</p><p>阅读代码时，建议按照下图来理解：</p><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [21].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><a href="17 IMX6ULL裸机开发：GPIO中断编程_files/except.zip"><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/a17a8bff7b9050b415a49da245c4a68b.png" alt="except.zip"></a><h2>3.1 管脚设置与中断号查询</h2><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [22].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>     从上面的电路图可见KEY1接在GPIO5_1（SNVS_TAMPER1pad，ALT5）上，KEY4接在GPIO4_14（NAND_CE1_Bpad，ALT5）上。</div><div>     程序中使用IOMUXC_SetPinMux函数设置这两个引脚为GPIO模式。</div><p>     如何获取这两个GPIO的中断号呢？查阅数据手册的《chapter3，CORTEX A7interrupts》章节，这两个GPIO的中断号如下表所示。对应到GIC的SPI中断号需要在此编号基础上加上32，所以KEY1对应的GIC interrupt ID为（74+ 32= 106），KEY2对应的GIC interrupt ID为（72+ 32= 104）。</p><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [23].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>     当发生GIC 104号中断时，表示发生了GPIO4中interrupt 0～15，需要进一步细分出是GPIO4里的哪一个中断。</div><p>     当发生GIC 106号中断时，表示发生了GPIO5中interrupt 0～15，需要进一步细分出是GPIO5里的哪一个中断。</p><h2>3.2 GIC控制器基地址的获取方法</h2><div>直接查数据手册Table 2-1. System memory map，可以知道gic的基地址是0xA0000，如下图：</div><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/Image [24].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>对于GIC基地址，还可以通过 CP15查询，下面指令将GIC的基地址读到r0寄存器：</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">mrc p15, 4, r0, c15, c0, 0</div><h2>3.3 GIC初始化</h2><a href="17 IMX6ULL裸机开发：GPIO中断编程_files/gic.c"><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/288c7915e58a62c8e0067cc27de815a0.png" alt="gic.c"></a><a href="17 IMX6ULL裸机开发：GPIO中断编程_files/gic.h"><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/cf6499e07d2a086452bbad6f4a62954e.png" alt="gic.h"></a><div><span style="color: #FF0000;"><b>gic_init函数实现了如下功能：</b></span></div><p>①通过CP15获取GIC的基地址，</p><p>②读取GICD_TYPER寄存器获得中断的数目，</p><p>③ 往GICD_ ICENABLERn寄存器写入0xFFFFFFFF禁用所有的SGI，PPI和SPI；</p><p>④通过GICC_PMR设置优先级等级，设置为0xF8；</p><p>⑤将GICC_BPR设置为2，这允许各个优先级进行抢占；</p><p>⑥ 最后使能group0的distributor和CPU interface。</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">void gic_init(void)
+{
+	u32 i, irq_num;
+
+	GIC_Type *gic = get_gic_base();
+
+	/* the maximum number of interrupt IDs that the GIC supports */
+	irq_num = (gic-&gt;D_TYPER &amp; 0x1F) + 1;
+
+	/* On POR, all SPI is in group 0, level-sensitive and using 1-N model */
+	
+	/* Disable all PPI, SGI and SPI */
+	for (i = 0; i &lt; irq_num; i++)
+	  gic-&gt;D_ICENABLER[i] = 0xFFFFFFFFUL;
+
+	/* The priority mask level for the CPU interface. If the priority of an 
+	 * interrupt is higher than the value indicated by this field, 
+	 * the interface signals the interrupt to the processor.
+	 */
+	gic-&gt;C_PMR = (0xFFUL &lt;&lt; (8 - 5)) &amp; 0xFFUL;
+	
+	/* No subpriority, all priority level allows preemption */
+	gic-&gt;C_BPR = 7 - 5;
+	
+	/* Enables the forwarding of pending interrupts from the Distributor to the CPU interfaces.
+	 * Enable group0 distribution
+	 */
+	gic-&gt;D_CTLR = 1UL;
+	
+	/* Enables the signaling of interrupts by the CPU interface to the connected processor
+	 * Enable group0 signaling 
+	 */
+	gic-&gt;C_CTLR = 1UL;</div><h2>3.4 中断异常处理汇编部分</h2><a href="17 IMX6ULL裸机开发：GPIO中断编程_files/start.S"><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/2d9b0356c94ba29e6e1f3f1056576748.png" alt="start.S"></a><div><span style="color: #FF0000;"><b>start.S中对于中断的处理，概括如下：</b></span></div><p>① 在异常向量表偏移为0x18的地方使用“ldr pc, =IRQ_Handler”跳转；</p><p>② IRQ_Handler标号的处理可以简单分为：保存现场，执行C函数，恢复现场：</p><p><br/></p><ul><li><p>在IRQ_Handler标号，处理器处于中断模式，“lr_irq - 4”就是被中断的、尚未执行的指令的地址，我们将r0-r12和“lr-4”都保存在栈上。</p></li><li><p>然后调用C函数handle_irq_c来处理中断。</p></li><li><p>函数返回来后，执行“ldmia sp!, {r0-r12, pc}^”，这条指令做的事情可多了：</p></li><ul><li><p>把保存在栈上的值恢复到r0-r12，把之前保存的“lr_irq - 4”恢复到PC</p></li><li><p>同时，把SPSR中保存的被中断状态的CPSR，恢复到CPSR(指令后的“^”号表示这个操作)</p></li></ul><li><p> 这样，被中断的程序就继续运行了。</p></li></ul><div>start.s代码如下</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">.text
+.global  _start, _vector_table
+_start:
+_vector_table:
+	ldr 	pc, =Reset_Handler			 /* Reset				   */
+	ldr 	pc, =Undefined_Handler		 /* Undefined instructions */
+	ldr 	pc, =SVC_Handler			 /* Supervisor Call 	   */
+	b halt//ldr 	pc, =PrefAbort_Handler		 /* Prefetch abort		   */
+	b halt//ldr 	pc, =DataAbort_Handler		 /* Data abort			   */
+	.word	0							 /* RESERVED			   */
+	ldr 	pc, =IRQ_Handler			 /* IRQ interrupt		   */
+	b halt//ldr 	pc, =FIQ_Handler			 /* FIQ interrupt		   */
+………
+.align 2          /*
+告诉汇编程序，本伪指令下面的内存变量必须从下一个能被2
+整除的地址开始分配*/
+IRQ_Handler:
+	/* 执行到这里之前:
+	 * 1. 
+lr_irq保存有被中断模式中的下一条即将执行的指令的地址
+	 * 2. SPSR_irq保存有被中断模式的CPSR
+	 * 3. CPSR中的M4-M0被设置为10010, 进入到irq模式
+	 * 4. 跳到0x18的地方执行程序 （向量表的偏移地址确定）
+	 */
+
+	/* 保存现场 */
+	/* 在irq异常处理函数中有可能会修改r0-r12, 所以先保存 */
+	/* lr-4是异常处理完后的返回地址, 也要保存 */
+	sub lr, lr, #4
+	stmdb sp!, {r0-r12, lr}  
+	
+	/* 处理irq异常 */
+	bl handle_irq_c
+	
+	/* 恢复现场 */
+	ldmia sp!, {r0-r12, pc}^  /* ^会把spsr_irq的值恢复到cpsr里 */	
+.align 2
+Reset_Handler:
+	/* Reset SCTlr Settings */
+	mrc 	p15, 0, r0, c1, c0, 0	  /* read SCTRL, Read CP15 System Control 
+register	*/
+	bic 	r0,  r0, #(0x1 &lt;&lt; 13)	  /* Clear V bit 13 to use normal exception 
+vectors */
+	bic 	r0,  r0, #(0x1 &lt;&lt; 12)	  /* Clear I bit 12 to disable I Cache */
+	bic 	r0,  r0, #(0x1 &lt;&lt;  2)	  /* Clear C bit  2 to disable D Cache	*/
+	bic 	r0,  r0, #(0x1 &lt;&lt; 2)	  /* Clear A bit  1 to disable strict alignment	*/
+	bic 	r0,  r0, #(0x1 &lt;&lt; 11)	  /* Clear Z bit 11 to disable branch prediction */
+	bic 	r0,  r0, #0x1			  /* Clear M bit  0 to disable MMU */
+	mcr 	p15, 0, r0, c1, c0, 0	  /* write SCTRL, CP15 System Control register */
+
+    cps     #0x1B                /* Enter undef mode                */
+    ldr     sp, =0x80300000     /* Set up undef mode stack      */
+
+    cps     #0x12                /* Enter irq mode                */
+    ldr     sp, =0x80400000     /* Set up irq mode stack      */
+
+    cps     #0x13                /* Enter Supervisor mode         */
+    ldr     sp, =0x80200000     /* Set up Supervisor Mode stack  */
+	/* 设置异常向量表基地址 : VBAR */	
+	ldr r0, =_vector_table
+	mcr p15, 0, r0, c12, c0, 0  /* set VBAR, Vector Base Address Register*/
+	//mrc p15, 0, r0, c12, c0, 0  //read VBAR
+
+	bl clean_bss
+
+	bl system_init
+	cpsie	i					 /* Unmask interrupts			  */
+
+	bl main
+
+halt:
+	b  halt
+
+
+clean_bss:
+	/* 清除BSS段 */
+	ldr r1, =__bss_start
+	ldr r2, =__bss_end
+	mov r3, #0
+clean:
+	cmp r1, r2
+	strlt r3, [r1]
+	add r1, r1, #4
+	blt clean
+	
+	mov pc, lr</div><div><br/></div><div><span style="color: #FF0000;"><b><span style="font-weight: bold;">注意</span></b>：</span>执行Reset_Handler时，CPU处于IRQ模式，用的是IRQ模式下的栈，需要先在Reset_Handler里设置好IRQ模式的栈，这样在中断模式里才可以使用栈，才能调用C函数。</div><p><span style="color: #FF0000;"><b><span style="font-weight: bold;">注意</span></b>：</span>在Reset_Handler里调用“cpsie i”打开中断，这是把CPSR中的I位清零。</p><p><span style="color: #FF0000;"><b><span style="font-weight: bold;">注意</span></b>：</span>在Reset_Handler里使用如下两条指令设置异常向量的基地址</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">ldr r0, =_vector_tablemcr p15, 0, r0, c12, c0, 0  /* set VBAR, Vector Base Address Register*/</div><h2>3.5 中断异常处理C函数部分</h2><a href="17 IMX6ULL裸机开发：GPIO中断编程_files/gic.c"><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/288c7915e58a62c8e0067cc27de815a0.png" alt="gic.c"></a><div><span style="color: #FF0000;"><b>handle_irq_c函数功能简述如下：</b></span></div><p>①获取到gic的基地址；</p><p>②读取GICC_IAR获得中断号；</p><p>③根据中断号调用对应中断号的irq_handler函数，该函数是用户通过request_irq注册的中断处理函数，</p><p>④ 然后往GICC_EOIR写入中断号清除掉中断。</p><div>gic代码如下：</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">void handle_irq_c(void)
+{
+	int nr;
+
+	GIC_Type *gic = get_gic_base();
+	/* The processor reads GICC_IAR to obtain the interrupt ID of the
+	 * signaled interrupt. This read acts as an acknowledge for the interrupt
+	 */
+	nr = gic-&gt; C_IAR;
+	printf(&quot;irq %d is happened\r\n&quot;, nr);
+	
+	irq_table[nr].irq_handler(nr, irq_table[nr].param);
+
+	/* write GICC_EOIR inform the CPU interface that it has completed 
+	 * the processing of the specified interrupt 
+	 */
+	gic-&gt;C_EOIR = nr;
+}</div><div><span style="color: #FF0000;">谁调用reqeust_irq设置了irq_table[nr].irq_handler？请看下一节。</span></div><h2>3.6 GPIO中断初始化与安装中断处理函数</h2><a href="17 IMX6ULL裸机开发：GPIO中断编程_files/main.c"><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/f6812b07c556982e31ac45d0f60a24e1.png" alt="main.c"></a><div><span style="color: #FF0000;"><b>先看看初始化函数key_irq_init，功能如下(以KEY1为例)：</b></span></div><p>① 对于KEY1，对应的引脚是GPIO5_01，通过EDGE_SEL设置成双边沿触发；</p><p>②设置IMR使能中断；</p><p>③ 为了防止误触发，先将ISR对应位写1清除掉中断；</p><p>④ 调用<span style="color: #FF0000;">request_irq</span>注册对应中断的中断处理函数，就是设置irq_table数组中某一项，设置函数指针：</p><p>对于GPIO5_01，处理函数是<span style="color: #FF0000;">key_gpio5_handle_irq</span>；对于GPIO4_14，处理函数是<span style="color: #FF0000;">key_gpio4_handle_irq</span>。</p><div><br/></div><div>初始化代码如下：</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">void key_irq_init(void)
+{
+	/* if set detects any edge on the corresponding input signal*/
+	GPIO5-&gt;EDGE_SEL |= (1 &lt;&lt; 1);
+	/* if set 1, unmasked, Interrupt n is enabled */
+	GPIO5-&gt;IMR |= (1 &lt;&lt; 1);
+	/* clear interrupt first to avoid unexpected event */
+	GPIO5-&gt;ISR |= (1 &lt;&lt; 1);
+
+	GPIO4-&gt;EDGE_SEL |= (1 &lt;&lt; 14);
+	GPIO4-&gt;IMR |= (1 &lt;&lt; 14);
+	GPIO4-&gt;ISR |= (1 &lt;&lt; 14);
+
+	request_irq(GPIO5_Combined_0_15_IRQn, (irq_handler_t)key_gpio5_handle_irq, NULL);
+	request_irq(GPIO4_Combined_0_15_IRQn, (irq_handler_t)key_gpio4_handle_irq, NULL);
+}</div><div><br/></div><div><br/></div><div><span style="color: #FF0000;"><b>还是以KEY1为例讲解处理函数key_gpio5_handle_irq，它的功能如下：</b></span></div><p>①读取GPIO_DR寄存器，根据GPIO5_01的状态打印信息、操作LED</p><p>② 在GPIO模块内部清除中断</p><p><br/></p><p>代码如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">void key_gpio5_handle_irq(void)
+{
+	/* read GPIO5_DR to get GPIO5_IO01 status*/
+	if((GPIO5-&gt;DR &gt;&gt; 1 ) &amp; 0x1) {
+		printf(&quot;key 1 is release\r\n&quot;);
+		/* led off, set GPIO5_DR to configure GPIO5_IO03 output 1 */
+		GPIO5-&gt;DR |= (1&lt;&lt;3); //led on
+	} else {
+		printf(&quot;key 1 is press\r\n&quot;);
+		/* led on, set GPIO5_DR to configure GPIO5_IO03 output 0 */
+		GPIO5-&gt;DR &amp;= ~(1&lt;&lt;3); //led off
+	}
+	/* write 1 to clear GPIO5_IO03 interrput status*/
+	GPIO5-&gt;ISR |= (1 &lt;&lt; 1);
+}
+void key_gpio4_handle_irq(void)
+{
+	/* read GPIO4_DR to get GPIO4_IO014 status*/
+	if((GPIO4-&gt;DR &gt;&gt; 14 ) &amp; 0x1)
+		printf(&quot;key 2 is release\r\n&quot;);
+	else
+		printf(&quot;key 2 is press\r\n&quot;);
+	/* write 1 to clear GPIO4_IO014 interrput status*/
+	GPIO4-&gt;ISR |= (1 &lt;&lt; 14);
+}</div><h2>3.7 特定中断号的中断使能与禁止</h2><div>设置好一切之后，就是使能中断了。</div><p><span style="color: #FF0000;"><b>对于GIC，程序里使用gic_enable_irq，它的功能为：</b></span></p><p>① 根据中断号找到对应的GICD_ISENABLERn寄存器；</p><p>② 往相应位中写入1，即可使能中断。</p><div><br/></div><div>要关闭中断时，操作是类似的，函数是gic_disable_irq，通过往GICD_ICENABLERn对应的位写入1来禁止中断。</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">void gic_enable_irq(IRQn_Type nr)
+{
+	GIC_Type *gic = get_gic_base();
+
+	/* The GICD_ISENABLERs provide a Set-enable bit for each interrupt supported by the GIC.
+	 * Writing 1 to a Set-enable bit enables forwarding of the corresponding interrupt from the
+	 * Distributor to the CPU interfaces. Reading a bit identifies whether the interrupt is enabled.
+	 */
+	gic-&gt;D_ISENABLER[nr &gt;&gt; 5] = (uint32_t)(1UL &lt;&lt; (nr &amp; 0x1FUL));
+
+}
+
+void gic_disable_irq(IRQn_Type nr)
+{
+	GIC_Type *gic = get_gic_base();
+
+	/* The GICD_ICENABLERs provide a Clear-enable bit for each interrupt supported by the
+	 * GIC. Writing 1 to a Clear-enable bit disables forwarding of the corresponding interrupt from
+     * the Distributor to the CPU interfaces. Reading a bit identifies whether the interrupt is enabled. 
+	 */
+	gic-&gt;D_ICENABLER[nr &gt;&gt; 5] = (uint32_t)(1UL &lt;&lt; (nr &amp; 0x1FUL));
+}
+</div><h2>3.8 修改CPSR使能中断</h2><div style="padding-left:40px;"> 在start.S中，可以看到如下代码，它把CP15中SCTRL的值读出后，把I bit清零，再写入。这就是在CPU核中使能IRQ中断。</div><p>代码如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">Reset_Handler:
+	/* Reset SCTRL Settings */
+	mrc 	p15, 0, r0, c1, c0, 0	  /* read SCTRL, Read CP15 System Control register	*/
+	bic 	r0,  r0, #(0x1 &lt;&lt; 13)	  /* Clear V bit 13 to use normal exception vectors */
+	bic 	r0,  r0, #(0x1 &lt;&lt; 12)	  /* Clear I bit 12 to disable I Cache */
+	bic 	r0,  r0, #(0x1 &lt;&lt;  2)	  /* Clear C bit  2 to disable D Cache	*/
+	bic 	r0,  r0, #(0x1 &lt;&lt; 2)	  /* Clear A bit  1 to disable strict alignment	*/
+	bic 	r0,  r0, #(0x1 &lt;&lt; 11)	  /* Clear Z bit 11 to disable branch prediction */
+	bic 	r0,  r0, #0x1			  /* Clear M bit  0 to disable MMU */
+	mcr 	p15, 0, r0, c1, c0, 0	  /* write SCTRL, CP15 System Control register */
+</div><h2>3.9 主函数调用</h2><a href="17 IMX6ULL裸机开发：GPIO中断编程_files/main.c"><img src="17 IMX6ULL裸机开发：GPIO中断编程_files/f6812b07c556982e31ac45d0f60a24e1.png" alt="main.c"></a><div>main函数调用system_init进行系统初始化，system_init做了这些事情：</div><p>①调用system_init_irq_table初始化中断跳转表；</p><p>②调用key_irq_init初始化按键中断：配置GPIO、注册中断处理函数；</p><p>③调用gic_init初始化GIC控制器；</p><p>④ 最后通过gic_enable_irq使能中断。</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">void system_init()
+{
+	init_pins();
+	led_gpio_init();
+	led_ctl(0);//turn off led
+	boot_clk_gate_init();
+	boot_clk_init();
+	uart1_init();
+	puts(&quot;hello world\r\n&quot;);
+	system_init_irq_table();    //初始化中断跳转表
+	key_irq_init();         //初始化按键中断、配置GPIO、注册中断处理函数
+	gic_init();         //初始化GIC控制器
+	gic_enable_irq(GPIO5_Combined_0_15_IRQn);//使能中断
+	gic_enable_irq(GPIO4_Combined_0_15_IRQn);//使能中断
+}</div><div><br/></div><h2>3.10 程序编译烧录运行</h2><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div></span>
+</div></body></html> 

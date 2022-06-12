@@ -1,0 +1,32 @@
+<html>
+<head>
+  <title>编程知识：汇编、反汇编、机器码</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/605138 (zh-CN, DDL); Windows/10.0.0 (Win64); EDAMVersion=V2;"/>
+  <meta name="content-class" content="yinxiang.superNote"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+<body>
+<a name="864"/>
+<h1>编程知识：汇编、反汇编、机器码</h1>
+<div>
+<table bgcolor="#D4DDE5" border="0">
+<tr><td><b>创建时间：</b></td><td><i>2022/1/12 14:19</i></td></tr>
+<tr><td><b>更新时间：</b></td><td><i>2022/1/12 14:26</i></td></tr>
+<tr><td><b>作者：</b></td><td><i>gi51wa2j</i></td></tr>
+<tr><td><b>标签：</b></td><td><i>bingo, 汇编, 细节知识</i></td></tr>
+</table>
+</div>
+<br/>
+
+<div><span><div><span style="color: #FF0000;"><b>此处以IMX6ULL笔记组中的LED程序为例讲解这部分内容</b></span></div><div><br/></div><h1>1. 程序处理的4个步骤</h1><p style="text-align:start;">我们的第1个LED程序涉及2个文件：start.S、main.c，它们的处理过程如下：</p><img src="编程知识：汇编、反汇编、机器码_files/Image.png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;">我们想深入理解ARM架构，想深入理解汇编与C，想深入理解栈的作用，想深入理解C语言的实质， 就必须把最终的可执行程序，反汇编后，阅读得到的汇编代码。</p><p style="text-align:start;"><br/></p><p style="text-align:start;">上述4个步骤的细节，在后面课程里再讲。 </p><p style="text-align:start;">现在只需要理解“汇编”、“反汇编”的概念：</p><ul><li><p>汇编 汇编文件转换为目标文件(里面是机器码)。</p></li><li><p>反汇编 可执行文件(目标文件，里面是机器码)，转换为汇编文件。</p></li></ul><h1>2. KEIL下怎么反汇编</h1><p style="text-align:start;">在KEIL的User选项中，如下图添加这两项：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">fromelf  --bin  --output=led.bin  Objects\led_c.axf
+fromelf  --text  -a -c  --output=led.dis  Objects\led_c.axf</div><p style="text-align:start;">然后重新编译，即可得到二进制文件led.bin(以后会分析)、反汇编文件led.dis。 如下图操作：</p><img src="编程知识：汇编、反汇编、机器码_files/002_keil_create_dis.png" type="image/png" data-filename="002_keil_create_dis.png" style="--en-uploadstate:uploaded;"/><h1>3. GCC下反汇编</h1><p style="text-align:start;">使用GCC工具链编译程序时，在Makefile中有这一句：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">$(OBJDUMP) -D -m arm  led.elf  &gt; led.dis	# OBJDUMP = arm-linux-gnueabihf-objdump</div><p style="text-align:start;">它就是把可执行程序led.elf，反汇编，得到led.dis。</p><h1>4. 机器码与汇编</h1><p style="text-align:start;"><b>参考资料：</b></p><div style="--en-blockquote:true;box-sizing: border-box; padding-left: 19px; padding-top: 6px; padding-bottom: 6px; border-left: 3px solid #b4c0cc; background-position: initial initial; background-repeat: initial initial; margin-top: 6px"><p style="text-align:start;">doc_and_source_for_mcu_mpu\通用资料\ARM:</p><p>    DDI0403E_B_armv7m_arm.pdf  P254  // cortex M3/M4</p><p>    ARM ArchitectureReference Manual ARMv7-A and ARMv7-R edition.pdf  P410  // cortex A7</p></div><p style="text-align:start;"><br/></p><p style="text-align:start;">       前面介绍过伪指令，伪指令是实际不存在的ARM命令，编译器在编译时转换成存在的ARM指令。</p><p style="text-align:start;">       我们代码中的<code style="-en-code: true">ldr r1, =0x????????</code>这条伪指令的真实指令是什么呢? </p><p style="padding-left:40px;text-align:start;">对于我们使用的3款板子，汇编代码如下(如果你的板子不是这3款之一，请灵活变通，知识是一样的)：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">LDR SP, =(0x20000000+0x10000)   // STM32F103
+ldr sp, =(0x80000000+0x100000)  // IMX6ULL
+ldr sp, =0xc0000000 + 0x100000  // STM32MP157 A7</div><p style="text-align:start;">我们可以通过反汇编来查看, 只摘取前面一小段。</p><h2>4.1 STM32F103反汇编</h2><p style="text-align:start;">我们只摘取前面一小段，第一列是地址，第二列是机器码，第三列是汇编：</p><img src="编程知识：汇编、反汇编、机器码_files/003_stm32f103_dis.png" type="image/png" data-filename="003_stm32f103_dis.png" style="--en-uploadstate:uploaded;"/><h2>4.2 STM32MP157反汇编</h2><img src="编程知识：汇编、反汇编、机器码_files/004_stm32mp157_a7.png" type="image/png" data-filename="004_stm32mp157_a7.png" style="--en-uploadstate:uploaded;"/><h2>4.3 IMX6ULL反汇编</h2><img src="编程知识：汇编、反汇编、机器码_files/005_imx6ull_dis.png" type="image/png" data-filename="005_imx6ull_dis.png" style="--en-uploadstate:uploaded;"/><h2>4.4 机器码与汇编示例</h2><h3>4.4.1 Thumb/Thumb2指令集</h3><img src="编程知识：汇编、反汇编、机器码_files/006_thumb_encoding.png" type="image/png" data-filename="006_thumb_encoding.png" style="--en-uploadstate:uploaded;"/><h3>4.4.2 ARM指令集</h3><img src="编程知识：汇编、反汇编、机器码_files/007_arm_encoding.png" type="image/png" data-filename="007_arm_encoding.png" style="--en-uploadstate:uploaded;"/><h3 style="text-align:start;">4.5 解析LDR伪指令</h3><p style="text-align:start;"><span style="color: #FF0000;"><b>为什么 PC=当前指令+4或8？</b></span></p><ul><li><p>CORTEX M3/M4 使用Thumb2指令集，一条指令是16位或32位。</p></li><li><p>CORTEX A7</p><p>默认使用ARM指令集，一条指令是32位的。</p></li><li><p>流水线</p><p>ARM指令采用流水线机制：</p></li><ul><li><p>当前执行地址A的指令，</p></li><li><p>同时已经在对下一条指令进行译码</p></li><li><p>同时已经在读取下下一条指令：PC = A +4 (Thumb/Thumb2指令集)、PC = A + 8 (ARM指令集)</p></li></ul></ul><h1>5. 总结</h1><ul><li><p>C 为了方便人类方便使用，发明的高级语言，要转换为汇编。</p></li><li><p>汇编 为了解放人类的记忆，发明的“助记符”，不用去记各类机器码。</p><p>最终要转换为机器码。</p></li><li><p>机器码</p><p>给CPU使用</p><p><br/></p></li></ul></span>
+</div></body></html> 

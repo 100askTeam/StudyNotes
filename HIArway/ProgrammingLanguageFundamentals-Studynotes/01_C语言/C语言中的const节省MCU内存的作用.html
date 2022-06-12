@@ -1,0 +1,64 @@
+<html>
+<head>
+  <title>C语言中的const节省MCU内存的作用</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/605138 (zh-CN, DDL); Windows/10.0.0 (Win64); EDAMVersion=V2;"/>
+  <meta name="content-class" content="yinxiang.superNote"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+<body>
+<a name="4361"/>
+<h1>C语言中的const节省MCU内存的作用</h1>
+<div>
+<table bgcolor="#D4DDE5" border="0">
+<tr><td><b>创建时间：</b></td><td><i>2022/4/21 19:29</i></td></tr>
+<tr><td><b>更新时间：</b></td><td><i>2022/4/22 10:19</i></td></tr>
+<tr><td><b>作者：</b></td><td><i>gi51wa2j</i></td></tr>
+<tr><td><b>标签：</b></td><td><i>C, raw, 细节知识</i></td></tr>
+</table>
+</div>
+<br/>
+
+<div><span><h1>1. const的作用（4种）</h1><ul><li><div>定义变量（局部变量或者全局变量）为常量，例如</div></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">const int N=100;//定义一个常量N
+N=50; //错误，常量的值不能被修改
+const int n; //错误，常量在定义的时候必须初始化</div><ul><li><div>修改函数的参数，表示在函数内不修改这个参数的值，防御性编程</div></li><li><div>修改函数的返回值</div></li><ul><li><div>如果给用const修饰返回值的类型为指针，那么函数返回值（即指针）的内容是不能被修改的，  而且这个返回值只能赋给被const修饰的指针。例如：</div></li></ul></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">const char GetString() //定义一个函数
+char *str= GetString() //错误，因为str没有被 const修饰
+const char *str=GetString() //正确</div><ul><ul><li><div>如果用const修饰普通的返回值，如返回int变量，由于这个返回值是一个临时变量，在函数调用  结束后这个临时变量的生命周期也就结束了，因此把这些返回值修饰为const是没有意义的。</div></li></ul><li><div>节省空间，避免不必要的内存分配，在MCU中const对于修饰普通的变量、数组、结构体等，都会存在ROM中，比如stm32就是存储在FLASH的.constdata数据段。</div></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">#include &lt;stdio.h&gt;
+    #define M 3               //宏常量
+   const int N = 5;          //此时并未将N放入内存中
+   int main()
+{
+       int i = N;                  //此时为N分配内存 ，以后不再分配
+       int I = M;                 //预编译期间进行宏替换，分配内存
+       int j = N;                  //没有内存分配
+       int J = M;                  //在进行宏替换，又一次分配内存
+   }</div><div style="padding-left:40px;">const定义的只读变量从汇编的角度来看，只是给出了对应的内存地址，所以i=N,j=N的时候等于是i与j的地址指向了N这个内存静态区地址,这样达到了节省空间的目的.而不是像#define一样给出的是立即数，所以，const定义的只读变量在程序运行过程中只有一份备份（因为它是全局的只读变量，放在静态区），而#define定义的宏常量在内存中有若干个备份。</div><p style="padding-left:40px;">总的来说,const引入常量的概念,是让我们不去修改内存中不该修改的地方.比较直接的作用是编译器可以提前发现逻辑上的错误，入宫我们又修改了不该改的内存,那么必然会引起程序崩溃.所以尽量多得使用const.</p><h1>2.const修饰节省空间解析</h1><div>MCU由于其资源较为紧张，所以通常通常需要对内存的资源进行节省，参考链接如下</div><div><a href="https://mp.weixin.qq.com/s?__biz=MzAwNjYwMjYyOA%3D%3D&amp;chksm=9b0bab42ac7c22545fb5217ec4c47f11b2a6fce6ef84d1d21eae786cb27f410a85a55224d99a&amp;idx=1&amp;mid=2247483817&amp;scene=21&amp;sn=6aec695b500d7212d714e621bae45202#wechat_redirect" rev="en_rl_none">单片机开发之内存节省大法</a></div><div><a href="https://mp.weixin.qq.com/s?__biz=MzAwNjYwMjYyOA%3D%3D&amp;chksm=9b0ba237ac7c2b2103b3f165e9a75efb7044c62b112eb824c2af1391fa26bd965508ca5ec942&amp;idx=1&amp;mid=2247485660&amp;scene=21&amp;sn=4bebe6d9cafc3acacc0c4857e654277d#wechat_redirect" rev="en_rl_none">单片机内存节省方法补充</a></div><h2><span style="color: #FF0000;">2.1 const修饰指针的注意事项</span></h2><ul><li><div>其中1,2两种形式是一致的，const均修饰的*ArrayList表示其ArrayList指针指向的存储控件不变，当是自身指向可变；</div></li><li><p>第3种情况const直接修饰的ArrayList3所以其指针指向是不能改变的，但指针所指向的存储控件内容可以发生变化，当然如下的hello bug不是变量而是一个常量，所以与第4种形式几乎是一样的。</p></li><li><p>第四种情况const直接修饰的ArrayList4其指针指向和指针指向的内容都<b>不</b>可以发生改变，由于“hello bug”默认是一个const的字符常量，所以这条语句和第三条语句含义基本相同，但是需要注意其他情况下有所不同。</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">	const char *ArrayList1 = &quot;hello bug&quot;;
+	char const *ArrayList2 = &quot;hello bug&quot;;
+	char *const ArrayList3 = &quot;hello bug&quot;;
+	const char *const ArrayList4 = &quot;hello bug&quot;;</div><div><br/></div><h2>2.2 测试</h2><div>我所使用的是STM32F103mini，使用MDK5创建工程</div><div>在工程选项中，我们可以看到ROM（Read Only Memory）和RAM(Read/Write Access memory)的起始地址分别为8000000和2000000，接下来使用const创建一个结构体。</div><img src="C语言中的const节省MCU内存的作用_files/Image.png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>定义一个结构体并初始化</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">
+	
+	typedef struct _tag_Pid
+	{
+		int P;
+		int I;
+		int D;
+		int PreOut;
+		int Out;
+		int Max;
+		int Min;
+	}stPid;
+	
+	volatile const stPid PidParamList[] = {	{1,2,3,0,0,0,}, 
+												{1,2,3,0,0,0,}, 
+												{1,2,3,0,0,0,}, 
+												{1,2,3,0,0,0,}, 
+												{1,2,3,0,0,0,}, 
+												{1,2,3,0,0,0,}, 
+											};</div><div><br/></div><div><br/></div><h1>3. 参考文章</h1><div>const相较于define节省RAM内存：</div><div><a href="https://mp.weixin.qq.com/s/F7gNyqdI790CcMhiy0_x7w">https://mp.weixin.qq.com/s/F7gNyqdI790CcMhiy0_x7w</a></div><div><br/></div></span>
+</div></body></html> 

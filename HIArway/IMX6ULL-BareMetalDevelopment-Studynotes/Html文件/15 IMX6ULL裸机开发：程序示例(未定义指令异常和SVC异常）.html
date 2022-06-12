@@ -1,0 +1,88 @@
+<html>
+<head>
+  <title>15 IMX6ULL裸机开发：程序示例(未定义指令异常和SVC异常）</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/605138 (zh-CN, DDL); Windows/10.0.0 (Win64); EDAMVersion=V2;"/>
+  <meta name="content-class" content="yinxiang.superNote"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+<body>
+<a name="1366"/>
+<h1>15 IMX6ULL裸机开发：程序示例(未定义指令异常和SVC异常）</h1>
+<div>
+<table bgcolor="#D4DDE5" border="0">
+<tr><td><b>创建时间：</b></td><td><i>2022/1/20 22:11</i></td></tr>
+<tr><td><b>更新时间：</b></td><td><i>2022/1/21 14:34</i></td></tr>
+<tr><td><b>作者：</b></td><td><i>gi51wa2j</i></td></tr>
+<tr><td><b>标签：</b></td><td><i>100ask_IMX6ULL_v11, bingo, 操作, 正文</i></td></tr>
+</table>
+</div>
+<br/>
+
+<div><span><h1>一、实战_未定义指令异常</h1><a href="15 IMX6ULL裸机开发：程序示例(未定义指令异常和SVC异常）_files/undefined.zip"><img src="15 IMX6ULL裸机开发：程序示例(未定义指令异常和SVC异常）_files/6d50f631fb17c946d1686caeaa8ba185.png" alt="undefined.zip"></a><div>要想深入理解异常处理，需要写程序来验证。 本节课程故意执行一条SVC指令，让它触发异常。</div><p style="text-align:start;">参考资料：<code style="-en-code: true">ARM ArchitectureReference Manual ARMv7-A and ARMv7-R edition.pdf</code></p><h2 style="text-align:start;">1.1 A7的异常向量表</h2><div>从向量表可以看出，A7支持哪些异常：未定义指令、软中断(SVC)、预取指令中止、数据中止、IRQ、FIQ。</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">_start: 
+    b	reset
+	ldr	pc, _undefined_instruction
+	ldr	pc, _software_interrupt                       /*cortex的A7中称为SVC*/
+	ldr	pc, _prefetch_abort
+	ldr	pc, _data_abort
+	ldr	pc, _not_used
+	ldr	pc, _irq
+	ldr	pc, _fiq</div><h2>1.2 什么是未定义指令</h2><div><span style="background-color: #ffffff;"><span style="font-weight: 400;"> </span></span>    <span style="background-color: #ffffff;"><span style="font-weight: 400;">未定义指令，即使&quot;还没有定义的指令&quot;，也就是CPU不认识的指令。很多时候，我们故意在代码里插入一些伪造的指令，故意让CPU执行到它时触发错误。这在调试时很有用，比如想打断点：怎么实现呢？</span></span></div><div><span style="background-color: #ffffff;"><span style="font-weight: 400;"> </span></span>    <span style="background-color: #ffffff;"><span style="font-weight: 400;">有很多种方法：硬件监视点(watch point，数量有限)、软件断点(数量无限)。</span></span></div><div><span style="background-color: #ffffff;"><span style="font-weight: 400;"> </span></span>    <span style="background-color: #ffffff;"><span style="font-weight: 400;">软件断点就是使用未定义指令来实现的，比如想让程序执行到某个地址A时停下来，可以这样做：</span></span></div><ul><li><p><span style="color: #FF0000;">地址A上原来的指令是xxx</span></p></li><li><p><span style="color: #FF0000;">我们故意把它改成yyy，改成一条CPU无法识别的指令</span></p></li><li><p><span style="color: #FF0000;">当CPU执行到地址A上的yyy指令时，触发异常</span></p></li><li><p><span style="color: #FF0000;">在异常处理函数里，打印更多调试信息</span></p></li><li><p><span style="color: #FF0000;">调试完毕后，恢复地址A上的指令为xxx</span></p></li><li><p><span style="color: #FF0000;">从地址A重新执行程序</span></p></li></ul><p style="text-align:start;">本节教程并不打算制作调试器，这里只是讲述一下未定义指令的作用，使用它来深入理解异常处理流程。</p><h2>1.4 编程过程</h2><h3>1.4.1 在汇编代码里插入未定义指令</h3><div>在代码中插入：</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">.word  0xffffffff</div><h3>1.4.2 设置异常向量表基地址</h3><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">MRC p15, 0, &lt;Rt&gt;, c12, c0, 0 ; Read VBAR into Rt
+MCR p15, 0, &lt;Rt&gt;, c12, c0, 0 ; Write Rt to VBAR</div><h3>1.4.3 设置未定义的栈</h3><div>本次实验代码建立在前几节代码的重定位基础上，这里设置异常部分程序使用的栈空间</div><img src="15 IMX6ULL裸机开发：程序示例(未定义指令异常和SVC异常）_files/Image.png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="648px"/><h3>1.4.4 保存现场</h3><div>这里可以重温一下上一节笔记中的2.3小节</div><div><a href="14 IMX6ULL裸机开发：异常处理（基础概念）.html" rev="en_rl_none">14 IMX6ULL裸机开发：异常处理（基础概念）</a></div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">	stmdb sp!, {R0-R3,R12,LR}</div><h3>1.4.5 处理异常</h3><div> 这里我们新建一个C文件，里面写一些调试信息，然后使用该命令跳转去执行</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">	bl do_undefined_c</div><h3>1.4.6 恢复现场</h3><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">	ldmia sp!, {R0-R3,R12,PC}^</div><h3>1.4.7 总结</h3><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">
+//#define STACK_BASE (0xc0000000 + 0x100000)  // stm32mp157
+#define STACK_BASE (0x80000000 + 0x100000)  // imx6ull
+#define STACK_SIZE (2048)
+
+
+.text
+.global  _start
+_start: 				
+    b	reset
+	ldr	pc, =do_undefined
+	.word 0  // ldr	pc, _software_interrupt
+	.word 0  // ldr	pc, _prefetch_abort
+	.word 0  // ldr	pc, _data_abort
+	.word 0  // ldr	pc, _not_used
+	.word 0  // ldr	pc, _irq
+	.word 0  // ldr	pc, _fiq
+
+reset:
+	/* 设置sp */
+	/* 对于STM32MP157设置链接地址为0xC0200000, 对于IMX6ULL设为0x80200000 */
+	ldr sp, =STACK_BASE
+
+	adr r0, _start
+	bl SystemInit
+
+	bl uart_init
+
+	/* 设置异常向量表基地址 : VBAR */
+	ldr r0, =_start
+	mcr p15, 0, r0, c12, c0, 0
+
+	.word 0xffffffff
+	
+	/* 调用main函数 */
+	//bl main
+	ldr pc, =main
+
+do_undefined:
+	/* 设置SP_und */
+	ldr sp, =STACK_BASE - STACK_SIZE
+	
+	/* 保存现场 */
+	stmdb sp!, {R0-R3,R12,LR}
+
+	/* 调用处理函数 */
+	bl do_undefined_c
+
+	/* 恢复现场 */
+	ldmia sp!, {R0-R3,R12,PC}^
+</div><h1>二、实战_SVC异常</h1><a href="15 IMX6ULL裸机开发：程序示例(未定义指令异常和SVC异常）_files/02_svc.zip"><img src="15 IMX6ULL裸机开发：程序示例(未定义指令异常和SVC异常）_files/cdfb69ef8a67e2153f1fe620f2842c1f.png" alt="02_svc.zip"></a><h2>2.1 什么是SVC异常</h2><div>     简单地说就是执行SVC这条汇编指令时就会触发这个异常，CPU就会跳转过执行SVC异常向量的代码。</div><p>     supervisor call（SVC）通常在用户模式下使用，这使得用户模式的代码能够访问OS功能。例如，如果用户代码想要访问系统的特权部分（例如执行文件I / O），则通常将使用SVC指令执行此操作。在Linux中对文件的open/read/write等APP层的系统函数，它的本质都是执行SVC指令，从而进入Linux内核中预设的SVC异常处理函数，在内核里操作文件。</p><p>可以使用寄存器或者操作码中某个字段将参数传递给SVC处理程序。</p><p>发生异常时，异常处理程序可能必须确定内核是处于ARM还是Thumb状态。</p><p>特别是SVC处理程序，可能必须读取指令集状态。这是通过检查SPSR T位完成的。该位设置为Thumb状态，清除为ARM状态。</p><p>     ARM和Thumb指令集都具有SVC指令。从Thumb状态调用SVC时，必须考虑以下因素：</p><p>•指令地址位于LR-2，而不是LR-4；</p><p>•指令本身是16位的，因此需要半字加载；</p><p>• SVC编号为8位而不是ARM状态下的24位。</p><p><b><span style="font-weight: bold;">注意</span></b>：ARM9等比较老的芯片里，这个异常是SWI异常，对应的指令是SWI。</p><p><br/></p><div style="--en-blockquote:true;box-sizing: border-box; padding-left: 19px; padding-top: 6px; padding-bottom: 6px; border-left: 3px solid #b4c0cc; background-position: initial initial; background-repeat: initial initial; margin-top: 6px"><div><span style="background-color: #ffffff;"><span style="font-weight: 400;">本节课程不讲解SVC在内核中的使用，我们只是看看如何处理SVC触发的异常。</span></span></div></div><div><br/></div><div><br/></div></span>
+</div></body></html> 

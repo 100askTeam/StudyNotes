@@ -1,0 +1,116 @@
+<html>
+<head>
+  <title>RTOS训练营C语言基础-链表</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/605138 (zh-CN, DDL); Windows/10.0.0 (Win64); EDAMVersion=V2;"/>
+  <meta name="content-class" content="yinxiang.superNote"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+<body>
+<a name="1810"/>
+<h1>RTOS训练营C语言基础-链表</h1>
+<div>
+<table bgcolor="#D4DDE5" border="0">
+<tr><td><b>创建时间：</b></td><td><i>2022/2/21 16:01</i></td></tr>
+<tr><td><b>更新时间：</b></td><td><i>2022/3/30 15:11</i></td></tr>
+<tr><td><b>作者：</b></td><td><i>gi51wa2j</i></td></tr>
+<tr><td><b>标签：</b></td><td><i>bingo, C, RTOS训练营, 细节知识</i></td></tr>
+</table>
+</div>
+<br/>
+
+<div><span><h1>1. 使用数组和链表的区别</h1><div>数组需要一大串连续的空间</div><div>链表需要把空闲的空间串联起来就好了</div><img src="RTOS训练营C语言基础-链表_files/Image.png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="RTOS训练营C语言基础-链表_files/Image [1].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h1>2. 链表分类</h1><img src="RTOS训练营C语言基础-链表_files/Image [2].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h1>3. 双向循环链表的插入与删除</h1><h2>3.1 插入</h2><img src="RTOS训练营C语言基础-链表_files/Image [3].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h2>3.2 删除</h2><img src="RTOS训练营C语言基础-链表_files/Image [4].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="643.8914728682171px"/><h1>4. 代码实现</h1><h2>4.1 定义结点和链表</h2><img src="RTOS训练营C语言基础-链表_files/Image [5].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h2>4.2 初始化结点和链表</h2><img src="RTOS训练营C语言基础-链表_files/Image [6].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>注意：链表头，里面有2个数据，一个就是有多少个链表项，另外一个就是根节点，一开始的时候，根节点也是一个节点，自己指向自己。</div><h2>4.3 插入结点ListNode</h2><div><br/></div><img src="RTOS训练营C语言基础-链表_files/Image [7].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="RTOS训练营C语言基础-链表_files/Image [8].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h2>4.4 删除结点ListNode</h2><div><br/></div><img src="RTOS训练营C语言基础-链表_files/Image [9].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h2>4.4 汇总代码</h2><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/*
+	lesson6：链表
+*/
+
+/*------------------------1.链表和结点的定义----------------------------*/
+
+/*结点结构体*/
+typedef struct LIST_NODE {
+	int data;                        /*用于存放结点数据*/
+	struct LIST_NODE *pxNext;        /*用于指向下一个结点*/
+	struct LIST_NODE *pxPrevious;    /*用于指向上一个结点*/
+}ListNode;
+
+
+/*链表结构体*/
+typedef struct LIST {
+	unsigned int NumberOfNodes;      /*用于记录链表结点数量*/
+	ListNode RootNode;               /*用于作为循环链表的参考点*/
+}List;
+
+/*------------------------2.链表和结点的初始化---------------------------*/
+/*结点初始化*/
+void ListInitialiseItem(ListNode *pxListNode, int value)
+{  
+	pxListNode-&gt;data = value;       /*结点数据赋值*/
+}
+
+/*链表初始化*/
+void ListInitialise(List *pxList)
+{
+	pxList-&gt;RootNode.pxNext = &amp;(pxList-&gt;RootNode);     /*由于此时链表中没有结点,第一个结点指向自己*/
+	pxList-&gt;RootNode.pxPrevious = &amp;(pxList-&gt;RootNode); /*由于此时链表中没有结点,第一个结点指向自己*/
+	
+	pxList-&gt;NumberOfNodes = 1;                         /*链表结点计数初始化为1,也就是只有一个根结点*/     
+}
+
+/*------------------------3.1结点插入链表---------------------------*/
+void ListInsertEnd(List *pxList, ListNode *pxInsertListNode)
+{
+	ListNode *pxNextNode = &amp;(pxList-&gt;RootNode);                /*插入结点的后结点*/
+	ListNode *pxPreviosNode = pxList-&gt;RootNode.pxPrevious;     /*插入结点的前结点*/
+
+	
+    pxInsertListNode-&gt;pxNext = pxNextNode;                     /*插入结点指向后结点*/
+	pxInsertListNode-&gt;pxPrevious = pxPreviosNode;              /*插入结点指向前结点*/ 
+	
+	pxPreviosNode-&gt;pxNext = pxInsertListNode;                  /*前结点指向插入结点*/   
+    pxNextNode-&gt;pxPrevious = pxInsertListNode;                 /*后结点指向插入结点*/   
+
+   (pxList-&gt;NumberOfNodes)++;                                  /*链表结点计数加1*/
+}
+
+/*------------------------3.2链表删除结点---------------------------*/
+void ListRemove(List *pxList, ListNode *pxIListToRemove)
+{
+	ListNode *pxPreviosNode = pxIListToRemove-&gt;pxPrevious;     /*删除结点的前结点*/
+	ListNode *pxNextNode = pxIListToRemove-&gt;pxNext;            /*删除结点的后结点*/
+	
+    pxNextNode-&gt;pxPrevious = pxPreviosNode;                    /*后结点指向前结点*/
+    pxPreviosNode-&gt;pxNext = pxNextNode;                        /*前结点指向后结点*/
+
+	(pxList-&gt;NumberOfNodes)--;                                 /*链表结点计数减1*/
+}
+
+
+int main(void)
+{
+	/*1.定义链表、结点*/
+	List      list;         //定义链表
+	ListNode  list_node1;   //定义结点1
+	ListNode  list_node2;   //定义结点2
+
+	/*2.初始化链表、结点*/
+	ListInitialise(&amp;list);
+	
+	ListInitialiseItem(&amp;list_node1, 100);
+	ListInitialiseItem(&amp;list_node2, 200);
+	
+	/*3.插入链表*/
+	ListInsertEnd(&amp;list, &amp;list_node1);
+	ListInsertEnd(&amp;list, &amp;list_node2);
+	
+	/*4.删除结点*/
+	ListRemove(&amp;list, &amp;list_node1);
+	
+	return 0;
+}
+</div><h1>5.课后问答</h1><img src="RTOS训练营C语言基础-链表_files/Image [10].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="RTOS训练营C语言基础-链表_files/Image [11].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="RTOS训练营C语言基础-链表_files/Image [12].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="RTOS训练营C语言基础-链表_files/Image [13].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="RTOS训练营C语言基础-链表_files/Image [14].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="RTOS训练营C语言基础-链表_files/Image [15].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="RTOS训练营C语言基础-链表_files/Image [16].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="RTOS训练营C语言基础-链表_files/Image [17].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="RTOS训练营C语言基础-链表_files/Image [18].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="RTOS训练营C语言基础-链表_files/Image [19].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><img src="RTOS训练营C语言基础-链表_files/Image [20].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div><br/></div></span>
+</div></body></html> 

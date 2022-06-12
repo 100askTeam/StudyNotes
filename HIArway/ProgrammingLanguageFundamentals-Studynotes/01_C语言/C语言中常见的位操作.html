@@ -1,0 +1,52 @@
+<html>
+<head>
+  <title>C语言中常见的位操作</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/605138 (zh-CN, DDL); Windows/10.0.0 (Win64); EDAMVersion=V2;"/>
+  <meta name="content-class" content="yinxiang.superNote"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+<body>
+<a name="876"/>
+<h1>C语言中常见的位操作</h1>
+<div>
+<table bgcolor="#D4DDE5" border="0">
+<tr><td><b>创建时间：</b></td><td><i>2022/1/11 21:23</i></td></tr>
+<tr><td><b>更新时间：</b></td><td><i>2022/2/21 15:00</i></td></tr>
+<tr><td><b>作者：</b></td><td><i>gi51wa2j</i></td></tr>
+<tr><td><b>标签：</b></td><td><i>bingo, C, 细节知识</i></td></tr>
+</table>
+</div>
+<br/>
+
+<div><span><h1>C语言的位移运算符</h1><div>常用的有如下</div><img src="C语言中常见的位操作_files/Image.png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h1>一、逻辑移位</h1><div><span style="color: #FF0000;">在嵌入式开发中，我们只涉及逻辑移位：不关心符号位，都是补0</span></div><p>算术移位，需要分有符号型值和无符号型值：</p><ul><li><p>对于无符号型值，算术移位等同于逻辑移位。</p></li><li><p>对于有符号型值 ，算术左移等同于逻辑左移；算术右移补的是符号位，正数补0，负数补1。</p></li></ul><h2>1.1 逻辑左移</h2><div><b>高位丢弃、低位补零。每次左移相等与乘以2</b></div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">int a = 0x123;  int b = a&lt;&lt;2;  // b=0x48C</div><img src="C语言中常见的位操作_files/Image [1].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="306px"/><h2>1.2 逻辑右移</h2><div><b>高位补零，低位丢弃。每次左移相等与除以2</b></div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">int a = 0x123;  int b = a&gt;&gt;2; // b=0x48</div><img src="C语言中常见的位操作_files/Image [2].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="303.2232277526395px"/><h1>二、取反</h1><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">unsigned int   a = 0x123;
+unsigned int   b = ~a;   // b的每一位，都是a对应位的取反</div><p>unsigned int a = 0x123;</p><p>unsigned int b = 0x456;</p><p>unsigned int c = a | b; // c等于a位或b，即：a,b的每一位进行或操作</p><h1>三、位与</h1><p>只有对应的两个二进位都为1时，结果位才为1</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">unsigned int a = 0x123;
+unsigned int b = 0x456;
+unsigned int c = a &amp; b; // c等于a位与b，即：a,b的每一位进行与操作</div><p>两位相与，结果 </p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">1 &amp; 1 = 1
+1 &amp; 0 = 0
+0 &amp; 1 = 0
+0 &amp; 0 = 0</div><img src="C语言中常见的位操作_files/Image [3].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;" width="708px"/><h1>四、位或</h1><p>只要对应的二个二进位有一个为1时，结果位就为1</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">int a = 0x6; //二进制是0b0110
+int b = 0x7; //二进制是0b0111
+
+int c = a|b;</div><p>两位相或，结果如下</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">1 | 1 = 1
+1 | 0 = 1
+0 | 1 = 1
+0 | 0 = 0</div><p>所以，上述C语言代码的结果如下图所示：</p><img src="C语言中常见的位操作_files/Image [4].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h1>五、置位</h1><div><span style="color: #FF0000;"><b>（使用位或的有0为0规则，且全1为1，说明1无影响）</b></span></div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">int a = 0x6;     //二进制是0b0110
+
+int a |= (1&lt;&lt;3);</div><p>第3行，将变量a的bit3置1。1&lt;&lt;3 = 0b1000，然后0b1000|0b0110=0b1110，即a=0xe</p><h1>六、清位</h1><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">int a = 0x6;     //二进制是0b0110
+
+int a &amp;= ~(1&lt;&lt;2);</div><p>第3行，将变量a的bit2清位。~(1&lt;&lt;2) = 0b1011，然后0b1011&amp;0b0110=0b0010，即a=0x2</p><h1>七、把某几位设置为某值</h1><div>比如要把bit7设置为1，把bit8清除为0，这可以分两步操作：先设置bit7，再清除bit8。</div><p>还有一种情况：bit[8:7]= val, 不知道val的取值是多少，怎么办？</p><p>先清除bit8、bit7，再或上val，代码如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">unsigned int a = 0x123;
+unsigned int b = a &amp; ~(3&lt;&lt;7);  /* 清除bit7, bit8 */获取
+b = b | (val &lt;&lt; 7);            /* 设置bit7, bit8为val */</div><h1>八、获取某一位的状态</h1><img src="C语言中常见的位操作_files/Image [5].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><div>操作如下：</div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">	/* 测位实验 */
+	if (*pGpiobOdr &amp; (1&lt;&lt;7))
+		a = 1;
+	else
+		a = 0;
+	</div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div><div><br/></div></span>
+</div></body></html> 

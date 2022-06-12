@@ -1,0 +1,513 @@
+<html>
+<head>
+  <title>【1】05设备子系统设计|程序设计框架</title>
+  <basefont face="微软雅黑" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="YXBJ Windows/605138 (zh-CN, DDL); Windows/10.0.0 (Win64); EDAMVersion=V2;"/>
+  <meta name="content-class" content="yinxiang.superNote"/>
+  <style>
+    body, td {
+      font-family: 微软雅黑;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+<body>
+<a name="3529"/>
+<h1>【1】05设备子系统设计|程序设计框架</h1>
+<div>
+<table bgcolor="#D4DDE5" border="0">
+<tr><td><b>创建时间：</b></td><td><i>2022/3/1 16:04</i></td></tr>
+<tr><td><b>更新时间：</b></td><td><i>2022/4/11 14:58</i></td></tr>
+<tr><td><b>作者：</b></td><td><i>gi51wa2j</i></td></tr>
+<tr><td><b>标签：</b></td><td><i>bingo, RTOS训练营, 基于HAL的智能家居, 正文</i></td></tr>
+</table>
+</div>
+<br/>
+
+<div><span><h1>1.设备系统_设计思路</h1><h2>1.1 总体框架</h2><div>构造一个设备子系统来屏蔽底层硬件的差异，方便移植</div><img src="【1】05设备子系统设计程序设计框架_files/02_software_block.png" type="image/png" data-filename="02_software_block.png" style="--en-uploadstate:uploaded;"/><h3>1.1.1 驱动程序和HAL库区别</h3><ul><li><div>HAL库：</div></li></ul><div>硬件和软件之间的藕合太严重了，如果硬件修改，随之软件也必须进行大幅度调整</div><img src="【1】05设备子系统设计程序设计框架_files/Image.png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><ul><li><div style="text-align:start;">驱动</div></li></ul><div style="text-align:start;">软件和硬件之间插入一层驱动程序，保证软件的接口不改变，驱动程序随便变化，使得应用程序可以在不同的硬件上运行。</div><h2>1.2 怎么访问设备</h2><h3>1.2.1 裸机里怎么访问设备</h3><p style="text-align:start;"><b>使用HAL库</b>，或者<b>厂家自己封装的库</b>，甚至<b>自己编写代码直接访问寄存器</b>。</p><p style="text-align:start;"><br/></p><h3>1.2.2 FreeRTOS怎么访问设备</h3><p style="text-align:start;">FreeRTOS中没有驱动程序框架，它访问设备时方法跟裸机一样。</p><p style="text-align:start;"><br/></p><h3>1.2.3 RT-Thread怎么访问设备</h3><p style="text-align:start;">RT-Thread可以使用2中方法访问设备：</p><ul><li><p>像裸机一样</p></li><li><p>使用RT-Thread的驱动程序框架</p></li></ul><img src="【1】05设备子系统设计程序设计框架_files/07_rt-thread_device_driver.png" type="image/png" data-filename="07_rt-thread_device_driver.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><span style="color: #FF0000;"><b>所谓&quot;驱动框架&quot;，就是事先定义好的接口函数，你要添加新设备就必须实现这些接口函数。</b></span></p><p style="text-align:start;">好处是：无论硬件怎么改，驱动程序的接口不变，上面的应用程序也就不需要改变。</p><p style="text-align:start;"><br/></p><p style="text-align:start;">&quot;I/O设备管理&quot;接口如下：</p><img src="【1】05设备子系统设计程序设计框架_files/08_rt-thread_io_device.png" type="image/png" data-filename="08_rt-thread_io_device.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><p style="text-align:start;">应用程序通过标准的接口来访问设备：rt_device_find/rt_device_open/rt_device_read/rt_device_write等等。</p><p style="text-align:start;"><br/></p><h3>1.2.4 Linux下怎么访问设备</h3><p style="text-align:start;">Linux系统中，APP和驱动程序严格分离开：</p><ul><li><p>APP无法直接读写寄存器</p></li><li><p>APP必须通过驱动程序访问设备</p></li><li><p>APP使用的接口只有：open/read/write/ioctl等</p></li></ul><img src="【1】05设备子系统设计程序设计框架_files/09_linux_driver.png" type="image/png" data-filename="09_linux_driver.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><h2>1.3 有必要统一设备的访问吗？</h2><p style="text-align:start;">先把设备子系统分层：</p><img src="【1】05设备子系统设计程序设计框架_files/10_device_system_level.png" type="image/png" data-filename="10_device_system_level.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;">至少有2层：虚线上下</p><ul><li><p><b>虚线之上：</b>写出统一的API接口</p></li><li><p><b>虚线之下：</b>根据不同的系统，调用不同的函数（可以屏蔽操作系统的不一样/硬件的不一样）</p></li></ul><p style="text-align:start;"><br/></p><p style="text-align:start;"><b>对于开发应用程序的人：</b></p><ul><li><p>他不关心LED使用哪个GPIO引脚</p></li><li><p>他不关心GPIO是输出高还是低来控制LED</p></li><li><p>他不关心open什么、read/write什么</p></li><li><p>我们不应该要求他：</p></li><ul><li><p>阅读原理图</p></li><li><p>阅读芯片手册</p></li><li><p>研究HAL库、RT-Thread或者Linux的驱动函数怎么调用</p></li></ul><li><p>甚至不应该要求他去理解你抽象出来的某个结构体</p></li><ul><li><p>你可以抽象出一个LEDDevice</p></li><li><p>但是LEDDevice里，他只关心怎么使用Init/Control中2个函数指针</p></li><li><p>其他成员一概不关心</p></li></ul></ul><p style="text-align:start;"><br/></p><div style="text-align:start;"><span style="color: #FF0000;"><b>虽然我们freertos中提供了统一的接口函数，但是这个统一能在freertos内部实现，所以我们很有必要提供更高层次的API，以LED为例：</b></span></div><ul><li><p>可以提供：LEDInit/LedControl，这2个函数可以放入LEDDevice结构体里</p></li><li><p>应用开发者，只需要调用这2个函数</p></li></ul><p style="text-align:start;"><span style="color: #FF0000;"><b>提供这些统一的接口不仅仅为了屏蔽操作系统的差别，屏蔽硬件的不一致也为了实现专业知识的隔离。</b></span></p><div style="text-align:start;"><br/></div><h2>1.4 设计原则：驱动和应用分开</h2><p style="text-align:start;">在Linux驱动开发中，有一句话：<b>驱动只提供功能，不提供策略</b>。</p><p style="text-align:start;">什么意思呢？就是各司其职，不要越界。</p><p style="text-align:start;">以LCD的使用为例，可以分为3层：</p><img src="【1】05设备子系统设计程序设计框架_files/11_lcd_level.png" type="image/png" data-filename="11_lcd_level.png" style="--en-uploadstate:uploaded;"/><ul><li><p>驱动程序：</p></li><ul><li><p>提供像素操作的功能</p></li><li><p>但是怎么显示字符、显示多大、在哪显示，这不关我的事</p></li></ul><li><p>库函数/功能函数：</p></li><ul><li><p>提供显示字符、显示图片的功能</p></li><li><p>但是显示什么字符、在哪显示，这不关我的事</p></li></ul><li><p>APP：</p></li><ul><li><p>使用库函数来显示字符、显示图片</p></li><li><p>我甚至不需要看驱动程序</p></li></ul></ul><p style="text-align:start;"><br/></p><p style="text-align:start;">我们实现各类子系统时，要划分层次的时候，也要理清楚：</p><ul><li><p>有哪些功能</p></li><li><p>这些功能怎么细分？得到层次</p></li><li><p>每个层次各司其职，不要越界</p></li></ul><p style="text-align:start;"><br/></p><h2>1.5 设计思路</h2><p style="text-align:start;">使用面向对象的思想，对于每一种设备，抽象出一个结构体，结构体里有设备相关的函数指针。</p><p style="text-align:start;">不同设备，不强求统一，不强求用一个结构体类型，支持所有设备。</p><p style="text-align:start;">编写函数时，要注意：</p><ul><li><p>头文件：这些函数是面向APP开发者，假设他们对硬件一无所知，尽量不传入专业类型的参数</p></li><li><p>C文件：函数内部，再根据不同系统、不同芯片，调用其他函数</p></li></ul><h1>2.设备系统_实现LED设备</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\10_7_device_led</div><h2>2.1 总体框架</h2><img src="【1】05设备子系统设计程序设计框架_files/02_software_block [1].png" type="image/png" data-filename="02_software_block.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><h2>2.2 LED有什么功能</h2><ul><li><p>开、关</p></li><li><p>设置颜色</p></li><li><p>设置亮度</p></li></ul><p style="text-align:start;"><br/></p><h2>2.3 抽象出结构体</h2><h3>2.3.1 如何抽象出结构体</h3><div>首先要明白怎么描述一个对象</div><ul><li><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">它有什么属性？</span></span></span></span></div></li><ul><li><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">结构体成员</span></span></span></span></div></li></ul><li><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">它有什么功能？</span></span></span></span></div></li><ul><li><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">函数指针</span></span></span></span></div></li></ul></ul><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: #FF0000;"><span style="font-weight: 400;">本质：</span></span></span><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: #FF0000;"><span style="font-weight: 400;">概括出它的</span><span style="font-weight: bold;">属性</span><span style="font-weight: 400;">，抽象出它的</span><span style="font-weight: bold;">功能</span><span style="font-weight: 400;">。</span></span></span></span></div><div><br/></div><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">#define LED_WHITE 	0
+#define LED_BLUE 	1
+#define LED_GREEN 	2
+
+typedef struct LEDDevice {
+	int which;
+	int (*Init)(struct LEDDevice *ptLEDDevice);
+	int (*Control)(struct LEDDevice *ptLEDDevice, int iStatus);
+	void (*SetColor)(struct LEDDevice *ptLEDDevice, int iColor);
+	void (*SetBrightness)(struct LEDDevice *ptLEDDevice, int iBrightness);
+}LEDDevice, *PLEDDevice;</div><p style="text-align:start;"><br/></p><h2>2.4 编程</h2><p style="text-align:start;">我们把LED设备分为4层：</p><img src="【1】05设备子系统设计程序设计框架_files/12_led_device_level.png" type="image/png" data-filename="12_led_device_level.png" style="--en-uploadstate:uploaded;"/><h3>2.4.1 设备层</h3><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">static int LEDDeviceInit(struct LEDDevice *ptLEDDevice)
+{
+	return KAL_LEDDeviceInit(ptLEDDevice);
+}
+
+static int LEDDeviceControl(struct LEDDevice *ptLEDDevice, int iStatus)
+{
+	return KAL_LEDDeviceControl(ptLEDDevice, iStatus);
+}
+
+
+static LEDDevice g_tLEDDevices = {
+	{LED_WHITE, LEDDeviceInit, LEDDeviceControl},
+	{LED_BLUE,  LEDDeviceInit, LEDDeviceControl},
+	{LED_GREEN, LEDDeviceInit, LEDDeviceControl},
+};
+
+PLEDDevice GetLEDDevice(int which)
+{
+	if (which &gt;= LED_WHITE &amp;&amp; which &lt;= LED_GREEN)
+		return &amp;g_tLEDDevices[which];
+	else
+		return NULL;
+}</div><p style="text-align:start;"><br/></p><h3>2.4.2 内核抽象层</h3><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">#include &lt;led_device.h&gt;
+
+int KAL_LEDDeviceInit(struct LEDDevice *ptLEDDevice)
+{	
+	/* 对于裸机/FreeRTOS */
+	return CAL_LEDDeviceInit(ptLEDDevice);
+
+	/* 对于RT-Thread */
+
+	/* 对于Linux */
+}
+
+int KAL_LEDDeviceControl(struct LEDDevice *ptLEDDevice, int iStatus)
+{
+	/* 对于裸机/FreeRTOS */
+	return CAL_LEDDeviceControl(ptLEDDevice, iStatus);
+
+	/* 对于RT-Thread */
+
+	/* 对于Linux */
+}</div><p style="text-align:start;"><br/></p><h3>2.4.3 芯片抽象层</h3><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">#include &lt;led_device.h&gt;
+
+int CAL_LEDDeviceInit(struct LEDDevice *ptLEDDevice)
+{	
+	/* 对于hal */
+	/* 已经在MX_GPIO_Init初始化了引脚 */
+	return 0;
+}
+
+int CAL_LEDDeviceControl(struct LEDDevice *ptLEDDevice, int iStatus)
+{
+	/* 对于hal */
+	return HAL_LEDDeviceControl(ptLEDDevice, iStatus);
+}</div><p style="text-align:start;"><br/></p><h3>2.4.4 硬件操作层</h3><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/*
+ *  函数名：int HAL_LEDDeviceControl(struct LEDDevice *ptLEDDevice, int iStatus)
+ *  输入参数：ptLEDDevice-哪个LED
+ *  输入参数：iStatus-LED状态, 1-亮, 0-灭
+ *  输出参数：无
+ *  返回值：0-成功, -1: 失败
+ */
+int HAL_LEDDeviceControl(struct LEDDevice *ptLEDDevice, int iStatus)
+{
+	if (!ptLEDDevice)
+		return -1;
+	
+	switch (ptLEDDevice-&gt;which)
+	{
+		case LED_WHITE: 
+		{
+		    HAL_GPIO_WritePin(WHITE_GPIO_Port, WHITE_Pin, !iStatus);
+			break;
+		}
+
+		case LED_BLUE: 
+		{
+		    HAL_GPIO_WritePin(BLUE_GPIO_Port, BLUE_Pin, !iStatus);
+			break;
+		}
+
+		case LED_GREEN: 
+		{
+		    HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, !iStatus);
+			break;
+		}
+
+		default:
+			return -1;
+	}
+
+	return 0;
+	
+}</div><p style="text-align:start;"><br/></p><h1>3.设备系统_单元测试</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\10_8_device_led_unittest</div><h2>3.1 编译程序</h2><p style="text-align:start;">编译程序时，最多的警告就是：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">..\smartdevice\kal\kal_time.c(16): warning:  #223-D: function &quot;CAL_GetTime&quot; declared implicitly</div><p style="text-align:start;">在.c文件中使用了某些函数，但是没有这些函数的声明。</p><p style="text-align:start;">解决方法是：</p><ul><li><p>在头文件中声明函数</p></li><li><p>在.c文件中包含头文件</p></li></ul><p style="text-align:start;"><br/></p><p style="text-align:start;">从第1个警告、第1个错误开始解决，修改完第1个警告/错误后就重新编译。</p><p style="text-align:start;"><br/></p><h2>3.2 编写测试代码</h2><p style="text-align:start;">代码：led_test.c</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： led_test
+ * 功能描述： 设备系统LED设备单元测试函数
+ * 输入参数： 无
+ * 输出参数： 无
+ * 返 回 值： 无
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/09/27	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+void led_test(void)
+{
+	PLEDDevice p1 = GetLEDDevice(LED_WHITE);
+	PLEDDevice p2 = GetLEDDevice(LED_BLUE);
+	PLEDDevice p3 = GetLEDDevice(LED_GREEN);
+
+	p1-&gt;Init(p1);
+	p2-&gt;Init(p2);
+	p3-&gt;Init(p3);
+
+	while (1)
+	{
+		p1-&gt;Control(p1, 1);
+		p2-&gt;Control(p2, 1);
+		p3-&gt;Control(p3, 1);
+
+		KAL_Delay(500);
+
+		p1-&gt;Control(p1, 0);
+		p2-&gt;Control(p2, 0);
+		p3-&gt;Control(p3, 0);
+		
+		KAL_Delay(500);
+		
+	}
+}</div><p style="text-align:start;"><br/></p><h2>3.3 上机实验</h2><p style="text-align:start;">三个灯同时闪烁</p><img src="【1】05设备子系统设计程序设计框架_files/Image [1].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h2>3.4 1-3节问题汇总</h2><h3>问：我记得输入子系统中您并不推荐用宏开关，而是用结构体来支持不同类型，当初还举了lcd的例子。</h3><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bold;">答：</span><span style="font-weight: 400;">对于这个问题，什么时候使用宏开关 ？什么时候使用结构体？</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">问题的核心在于：是否同时支持？</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">对于一个编译好的程序，我们不会同时支持裸机、支持RTOS。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">所以我们可以使用宏开关，来启动一部分代码，禁止另一部分代码，不占用多余Flash。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">而程序中，要支持多种输入设备，要支持多种LCD，比如程序不变，换其它规格的LCD，最好是使用链表。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">因此，要同时支持，就用结构体；事先就定死只支持一个，就用宏开关。</span></span></span></span></div><h3>问：比如一个标准库的gpio初始化是传一个整形的instance和一个pin，</h3><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">然后hal库的gpio初始化是要传gpio寄存器的首地址和pin，</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">那cal对外封装的结构体是要封装三个参数吗？整形instance，首地址，pin？</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bold;">答：</span></span></span></span> <span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">不用，这里要有“翻译”，举个例子：</span></span></span></span></div><img src="【1】05设备子系统设计程序设计框架_files/ku6cev840655.jpg" type="image/jpeg" data-filename="ku6cev840655.jpg" style="--en-uploadstate:uploaded;"/><div><br/></div><h1>4.设备系统_显示设备结构体抽象</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\10_9_device_display_struct</div><h2>4.1 显示设备的硬件概括</h2><h3>4.1.1 LCD显示原理</h3><p style="text-align:start;">什么是LCD？就是多行多列的像素：</p><ul><li><p>对于黑白屏幕(单色屏幕)，这些像素只有2个状态：点亮、熄灭</p></li><li><p>对于彩色屏幕，这些像素有颜色：可以用RGB三原色来表示</p></li></ul><p style="text-align:start;">怎么控制LCD上每个像素的状态？</p><ul><li><p>有显存，就是一块内存，也被称为FrameBuffer</p></li><li><p>每个像素在显存上都有对应的数据</p></li><ul><li><p>对于黑白屏(单色屏)，每个像素在显存里有对应的1位数据</p></li><li><p>对于彩色屏，每个像素在显存里有几个字(可能是1字节、2字节、4字节)</p></li><li><p>每个像素用多少位数据？被称为BPP：Bits Per Pixel。</p></li></ul></ul><p style="text-align:start;"><span style="color: #FF0000;"><b>要注意的是，LCD可能自带显存，也可能不带有显存(要使用LCD的话，就需要在系统内存中分配显存)。</b></span></p><p style="text-align:start;"><br/></p><img src="【1】05设备子系统设计程序设计框架_files/13_lcd.png" type="image/png" data-filename="13_lcd.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><p style="text-align:start;">有三种类型的LCD。</p><h3>4.1.2 LCD含有显存, CPU通过I2C访问</h3><p style="text-align:start;">很多I2C、SPI接口的屏幕，本身是含有显存的。要在LCD上显示文字、图片，就需要网显存里写入数据。</p><p style="text-align:start;">程序通过I2C接口写显存。</p><img src="【1】05设备子系统设计程序设计框架_files/09_display_with_ram_through_i2c.png" type="image/png" data-filename="09_display_with_ram_through_i2c.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><h3>4.1.3 LCD含有显存, CPU可以直接访问</h3><p style="text-align:start;">有些LCD含有显存，并且CPU可以直接访问显存：就像访问一般内存一样访问显存。</p><p style="text-align:start;">我们只需要写数据到显存即可。</p><img src="【1】05设备子系统设计程序设计框架_files/11_display_with_ram_like_ram.png" type="image/png" data-filename="11_display_with_ram_like_ram.png" style="--en-uploadstate:uploaded;"/><h3>4.1.4 LCD没有显存, LCD控制器从内存得到数据</h3><p style="text-align:start;">很多TFT LCD本身是没有显存的，那么数据保存在哪里？可以在系统内存里分配一块空间，它就是显存。</p><p style="text-align:start;">设置好LCD控制器后，它就会自动从显存取出数据、发送给LCD。</p><p style="text-align:start;">我们只需要写数据到显存即可。</p><img src="【1】05设备子系统设计程序设计框架_files/10_display_without_ram.png" type="image/png" data-filename="10_display_without_ram.png" style="--en-uploadstate:uploaded;"/><h3>4.1.5 差别在哪？</h3><p style="text-align:start;">对于软件来说，这3种LCD都有显存，第1种无法直接写显存；第2、3种可以直接写显存。</p><p style="text-align:start;">能否统一？</p><p style="text-align:start;">对于第1种LCD，能否也直接写显存？可以：</p><ul><li><p>在系统内存分配另一个&quot;显存FB&quot;</p></li><li><p>软件直接写&quot;显存FB&quot;</p></li><li><p>在通过I2C把&quot;显存FB&quot;的内容传送到LCD自带的显存</p></li></ul><img src="【1】05设备子系统设计程序设计框架_files/12_another_framebuffer.png" type="image/png" data-filename="12_another_framebuffer.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><h2>4.2 显示设备的结构体抽象</h2><p style="text-align:start;">怎么抽象出一个显示设备？</p><ul><li><p>有初始化函数</p></li><li><p>有显存，怎么描述显存？</p></li><ul><li><p>起始地址</p></li><li><p>分辨率</p></li><li><p>每个像素用多少位来表示</p></li></ul><li><p>对于第1种LCD，还需要一个Flush函数，把&quot;显存FB&quot;的内容&quot;刷&quot;到LCD的显存去</p></li></ul><p style="text-align:start;">结构体如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">typedef struct DispayDevice {
+	char *name;			   //名字
+	void *FBBase;		   //显存基地址，Frame帧
+	int iXres;             //X分辨率
+	int iYres;             //X分辨率
+	int iBpp;              //每个像素用几位来表示
+	int (*Init)(struct DispayDevice *ptDev);//初始化函数
+	void (*Flush)(struct DispayDevice *ptDev);//刷新函数，将显存数据刷新到屏幕
+}DispayDevice, *PDispayDevice;</div><p style="text-align:start;"><br/></p><ul><li><p style="text-align:start;">对于可以直接写显存的设备，可以把Flush函数设置为空函数</p></li><li><p style="text-align:start;">对于不能直接写显存的设备，先把数据放到FBBase这个临时显存中，然后调用Flush函数把数据刷到显示器中</p></li></ul><h1>5.设备系统_实现显示设备</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\10_10_device_display_oled
+
+// 需要用到OLED的代码
+rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		03_项目必备的HAL库基础\1_项目源码\4_OLED</div><h2>5.1 显示设备的结构体抽象</h2><p style="text-align:start;">怎么抽象出一个显示设备？</p><ul><li><p>有初始化函数</p></li><li><p>有显存，怎么描述显存？</p></li><ul><li><p>起始地址</p></li><li><p>分辨率</p></li><li><p>每个像素用多少位来表示</p></li></ul><li><p>对于第1种LCD，还需要一个Flush函数，把&quot;显存FB&quot;的内容&quot;刷&quot;到LCD的显存去</p></li></ul><p style="text-align:start;">结构体如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">typedef struct DispayDevice {
+	char *name;
+	void *FBBase; /* CPU能直接读写的显存 */
+	int iXres;    /* X方向分辨率 */
+	int iYres;    /* Y方向分辨率 */
+	int iBpp;     /* 每个像素使用多少个像素 */
+	int (*Init)(struct DispayDevice *ptDev);   /* 硬件初始化 */
+	void (*Flush)(struct DispayDevice *ptDev); /* 把FBBase的数据刷到LCD的显存里 */
+
+	/* 设置FBBase中的数据, 把(iX,iY)的像素设置为颜色dwColor 
+	 * dwColor的格式:0x00RRGGBB
+	 */
+	int (*SetPixel)(struct DispayDevice *ptDev, int iX, int iY, unsigned int dwColor); 
+}DispayDevice, *PDispayDevice;
+</div><p style="text-align:start;"><br/></p><h2>5.2 程序层次</h2><img src="【1】05设备子系统设计程序设计框架_files/13_display_layer.png" type="image/png" data-filename="13_display_layer.png" style="--en-uploadstate:uploaded;"/><h2>5.3 编程</h2><p style="text-align:start;">核心是底下的oled_device.c，它要构造出一个DisplayDevice。</p><p style="text-align:start;">我们先实现它，再去考虑管理的事情。</p><h3>5.3.1 构造DisplayDevice</h3><p style="text-align:start;">文件：oled_device.c</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">static DispayDevice g_tOLEDDevice = {
+	&quot;OLED&quot;,
+	g_OLEDFramebuffer,
+	128,
+	64,
+	1,
+	OLEDDeviceInit,
+	OLEDDeviceFlush,
+	OLEDDeviceSetPixel
+};</div><h5 style="text-align:start;">5.3.1.1 Init和Flush</h5><p style="text-align:start;">OLEDDeviceInit和OLEDDeviceFlush比较简单，都是调用下面KAL层的函数：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： OLEDDeviceInit
+ * 功能描述： 初始化OLED硬件
+ * 输入参数： ptDev-哪个显示设备
+ * 输出参数： 无
+ * 返 回 值： 0-成功
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/09/29	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+static int OLEDDeviceInit(struct DispayDevice *ptDev)
+{
+	/* 初始化OLED硬件 */
+	return KAL_OLEDDeviceInit(ptDev);
+}
+
+/**********************************************************************
+ * 函数名称： OLEDDeviceFlush
+ * 功能描述： 把临时显存的数据, 刷到LCD的显存去
+ * 输入参数： ptDev-哪个显示设备
+ * 输出参数： 无
+ * 返 回 值： 无
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/09/29	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+static void OLEDDeviceFlush(struct DispayDevice *ptDev)
+{
+	/* 把Framebuffer g_OLEDFramebuffer的数据搬到OLED自带的显存里 */
+	KAL_OLEDDeviceFlush(ptDev);
+}</div><p style="text-align:start;"><br/></p><h5 style="text-align:start;">5.3.1.2 SetPixel函数</h5><p style="text-align:start;">需要计算的就是，(iX, iY)在显存里哪个位置、哪个bit，</p><p style="text-align:start;">代码如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： OLEDDeviceSetPixel
+ * 功能描述： 在显存中设置(iX,iY)像素的颜色
+ * 输入参数： ptDev-哪个显示设备
+ * 输入参数： iX-X坐标
+ * 输入参数： iY-Y坐标
+ * 输入参数： dwColor-颜色
+ * 输出参数： 无
+ * 返 回 值： 0-成功
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/09/29	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+static int OLEDDeviceSetPixel(struct DispayDevice *ptDev, int iX, int iY, unsigned int dwColor) /* 0x00RRGGBB */
+{
+	unsigned char *buf = ptDev-&gt;FBBase;
+	int page;
+	unsigned char *byte;
+	int bit;
+	
+	if (iX &gt;= ptDev-&gt;iXres || iY &gt;= ptDev-&gt;iYres)
+		return -1;
+  
+	page = iY / 8;  					/*得到页信息*/
+	byte = buf + page * 128 + iX;	/*得到像素地址*/
+	bit = iY % 8;	  					/*得到列信息*/
+  
+	if (dwColor)
+		*byte |= (1&lt;&lt;bit);
+	else
+		*byte &amp;= ~(1&lt;&lt;bit);
+
+	return 0;
+}</div><p style="text-align:start;"><br/></p><h3>5.3.2 KAL层</h3><p style="text-align:start;">文件：kal_oled_device.c</p><p style="text-align:start;">核心思路就是根据配置项，调用对应的函数。代码如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： KAL_OLEDDeviceInit
+ * 功能描述： 内核抽象层的函数,初始化OLED硬件
+ * 输入参数： ptDev-哪个显示设备
+ * 输出参数： 无
+ * 返 回 值： 0-成功
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/09/29	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+int KAL_OLEDDeviceInit(struct DispayDevice *ptDev)
+{
+	/* 初始化OLED硬件 */
+#if defined (CONFIG_NOOS)
+	return CAL_OLEDDeviceInit(ptDev);
+#elif defined (CONFIG_FREERTOS)
+	return FreeRTOS_OLEDDeviceInit(ptDev);
+#elif defined (CONFIG_RTTHREAD)
+	return RTThread_OLEDDeviceInit(ptDev);
+#endif
+}
+
+/**********************************************************************
+ * 函数名称： OLEDDeviceFlush
+ * 功能描述： 内核抽象层的函数, 把临时显存的数据, 刷到LCD的显存去
+ * 输入参数： ptDev-哪个显示设备
+ * 输出参数： 无
+ * 返 回 值： 无
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/09/29	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+void KAL_OLEDDeviceFlush(struct DispayDevice *ptDev)
+{
+	/* 把Framebuffer g_OLEDFramebuffer的数据搬到OLED自带的显存里 */
+#if defined (CONFIG_NOOS)
+	CAL_OLEDDeviceFlush(ptDev);
+#elif defined (CONFIG_FREERTOS)
+	FreeRTOS_OLEDDeviceFlush(ptDev);
+#elif defined (CONFIG_RTTHREAD)
+	RTThread_OLEDDeviceFlush(ptDev);
+#endif
+  }</div><p style="text-align:start;"><br/></p><h3>5.3.3 CAL层</h3><p style="text-align:start;">文件：cal_oled_device.c</p><p style="text-align:start;">核心思路就是根据配置项，调用对应的函数。代码如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： CAL_OLEDDeviceInit
+ * 功能描述： 芯片抽象层的函数,初始化OLED硬件
+ * 输入参数： ptDev-哪个显示设备
+ * 输出参数： 无
+ * 返 回 值： 0-成功
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/09/29	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+int CAL_OLEDDeviceInit(struct DispayDevice *ptDev)
+{
+	/* 初始化OLED硬件 */
+#if defined (CONFIG_SUPPORT_HAL)
+    // 1. 重新初始化I2C的引脚
+    I2C_GPIO_ReInit();
+    // 2. 初始化OLED  
+    OLED_Init();
+	return 0;
+#elif 
+	return NOHAL_OLEDDeviceInit(ptDev);
+#endif
+}
+
+/**********************************************************************
+ * 函数名称： CAL_OLEDDeviceFlush
+ * 功能描述： 芯片抽象层的函数, 把临时显存的数据, 刷到LCD的显存去
+ * 输入参数： ptDev-哪个显示设备
+ * 输出参数： 无
+ * 返 回 值： 无
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/09/29	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+void CAL_OLEDDeviceFlush(struct DispayDevice *ptDev)
+{
+	/* 把Framebuffer g_OLEDFramebuffer的数据搬到OLED自带的显存里 */
+#if defined (CONFIG_SUPPORT_HAL)
+	OLED_Copy(ptDev-&gt;FBBase);
+#elif 
+	NOHAL_OLEDDeviceFlush(ptDev);
+#endif
+  }</div><p style="text-align:start;"><br/></p><h3>5.3.4 硬件操作</h3><p style="text-align:start;">一起讲HAL库时写过程序，参考代码：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">// 需要用到OLED的代码
+rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		03_项目必备的HAL库基础\1_项目源码\4_OLED</div><img src="【1】05设备子系统设计程序设计框架_files/14_oled_driver_file.png" type="image/png" data-filename="14_oled_driver_file.png" style="--en-uploadstate:uploaded;"/><h2>5.4 显示设备晚课问题汇总</h2><h3>问：课程中抽象的LCD结构体，里面void *FBBase;为什么使用void *?</h3><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bold;">答：</span><span style="font-weight: 400;">之所以写成 void *, 是因为他可以直接赋给给任何的指针：</span></span></span></span> <span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">char *buf = FBBase;</span></span></span></span></span> <span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">short *buf = FBBase;</span></span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">也可以接受任何的指针：</span></span></span></span> <span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">char *buf; FBBase = buf;</span></span></span></span></span> <span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">short *buf; FBBase = buf;</span></span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">对于8bbp的情况, 我们操作一个数据时就是</span></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">unsigned char *</span></span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">对于16bbp的情况, 我们操作一个数据时就是</span></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">unsigned short *</span></span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">对于32bbp的情况, 我们操作一个数据时就是</span></span></span></span><span style="font-size: 0.9em;"><span style="font-family: var(--monospace);"><span style="color: rgb(51, 51, 51);"><span style="background-color: #f3f4f4;"><span style="font-weight: 400;">unsigned int</span></span></span></span></span></div><h3>问：课程中display的设备最终是调用到oled底层的接口的，很疑惑，为什么不是对Oled进行抽象，oled和display这个设备的关系是什么?</h3><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bold;">答：</span><span style="font-weight: 400;">Oled属于一种显示设备，OLED属于Display。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">我们的产品中可能支持多个屏幕。</span></span></span></span></div><h3>问：对于屏幕不同颜色闪屏的这种是怎么设计的，循环嘛？</h3><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bold;">答：</span></span></span></span> <span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">闪屏的问题在于：程序一边写数据， LCD同时读数据来显示。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">比如就会出现半边红半边蓝的问题：</span></span></span></span></div><img src="【1】05设备子系统设计程序设计框架_files/spacer.gif" type="image/gif" data-filename="spacer.gif" style="--en-uploadstate:uploaded;"/><img src="【1】05设备子系统设计程序设计框架_files/kuj9qhrx001t.jpg" type="image/jpeg" data-filename="kuj9qhrx001t.jpg" style="--en-uploadstate:uploaded;"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">眼睛就感觉到闪屏。</span></span></span></span></div><h3>问：应该有像freetype库那样的开源库吧，输入汉字，他给你转换成点阵？</h3><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bold;">答：</span><span style="font-weight: 400;">可以得到点阵，但是这个点阵怎么在屏幕上显示出来，底层的驱动需要我们实现。一般来说都是提供显存：LVGL、QT等GUI都是这样做的。</span></span></span></span></div><h1>问：怎么判断cpu是否可以直接操作显存呢？</h1><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bolder;">答：</span><span style="font-weight: 400;">要大家可以打开这个原理图：</span></span></span></span></div><img src="【1】05设备子系统设计程序设计框架_files/kujh2yre0bj8.jpg" type="image/jpeg" data-filename="kujh2yre0bj8.jpg" style="--en-uploadstate:uploaded;"/><img src="【1】05设备子系统设计程序设计框架_files/kujh2yrh0dfp.jpg" type="image/jpeg" data-filename="kujh2yrh0dfp.jpg" style="--en-uploadstate:uploaded;"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">F103通过内存接口，来连接LCD， LCD上自带显存， CPU可以直接写显存。</span></span></span></span></div><img src="【1】05设备子系统设计程序设计框架_files/kuj9qgsf0gpu.jpg" type="image/jpeg" data-filename="kuj9qgsf0gpu.jpg" style="--en-uploadstate:uploaded;"/><p><br/></p><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">这个就是RAM-LIKE接口。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">这个里面必定有片选信号：</span></span></span></span></div><img src="【1】05设备子系统设计程序设计框架_files/kujh2yri0iv7.jpg" type="image/jpeg" data-filename="kujh2yri0iv7.jpg" style="--en-uploadstate:uploaded;"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">下面我们再来看看这种非内存接口情况：</span></span></span></span></div><img src="【1】05设备子系统设计程序设计框架_files/kujh2yrj0hcb.jpg" type="image/jpeg" data-filename="kujh2yrj0hcb.jpg" style="--en-uploadstate:uploaded;"/><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">我们以一个IMX6ULL板子为例，它的接线全是LCD的颜色数据线：</span></span></span></span></div><img src="【1】05设备子系统设计程序设计框架_files/kujh2yrk07sc.jpg" type="image/jpeg" data-filename="kujh2yrk07sc.jpg" style="--en-uploadstate:uploaded;"/><p><br/></p><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">所以，</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">1. LCD本身没有内存</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">2. 主芯片上必定有一个LCD控制器</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">3. LCD控制器会去内存里面取出数据，发给LCD</span></span></span></span></div><p><br/></p><div><br/></div><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">我们再来比较一下这两种接口，</span></span></span></span></div><div><span style="font-size: 13pt;"><span style="color: #FF0000;"><b>内存的接口是怎样的：有地址线、有数据线、是读还是写、还有片选</b></span></span></div><p><br/></p><p><br/></p><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">再想想，内存，要读数据写数据才叫内存。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">要读写内存哪一个位置？就得要有地址。</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">要传输数据：就得要有数据线。</span></span></span></span></div><div><br/></div><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">再来看看LCD的接口，明显和RAM-LIKE接口有区别：</span></span></span></span></div><img src="【1】05设备子系统设计程序设计框架_files/kujh2ztf0hg2.jpg" type="image/jpeg" data-filename="kujh2ztf0hg2.jpg" style="--en-uploadstate:uploaded;"/><img src="【1】05设备子系统设计程序设计框架_files/kujh2zwc0jvd.jpg" type="image/jpeg" data-filename="kujh2zwc0jvd.jpg" style="--en-uploadstate:uploaded;"/><h3>问：如果LCD控制器是12位的，怎么转换成RGB565的16位呢？</h3><div><span style="font-size: 14px;"><span style="font-family: Open Sans, Clear Sans, Helvetica Neue, Helvetica, Arial, Segoe UI Emoji, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: bolder;">答：</span><span style="font-weight: 400;">比如我的LCD控制器只能够发出4位的红颜色，但是LCD它需要5位的红颜色，有两个办法来处理：</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: 微软雅黑, Microsoft YaHei, Arial, sans-serif;"><span style="color: rgb(51, 51, 51);"><span style="font-weight: 400;">第一，把LCD的R3接地，让最低位永远都是0；</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">第二，把LCD的R3接到LCD控制器的红颜色最高位；</span></span></span></span></div><div><span style="font-size: 14px;"><span style="font-family: PingFangSC, Microsoft Yahei, Helvetica, Tahoma, Arial, Hiragino Sans GB, Hiragino Sans GB W3, STXihei, STHeiti, Heiti, SimSun, sans-serif;"><span style="color: rgb(53, 53, 53);"><span style="font-weight: 400;">这就是所谓的补位，人的眼睛没有那么敏感，这种接法都没什么问题的。</span></span></span></span></div><img src="【1】05设备子系统设计程序设计框架_files/kujh2zyo09uq.jpg" type="image/jpeg" data-filename="kujh2zyo09uq.jpg" style="--en-uploadstate:uploaded;"/><h1>6.设备系统_显示设备单元测试</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\10_11_device_display_oled_unittest</div><h2>6.1 程序层次</h2><img src="【1】05设备子系统设计程序设计框架_files/13_display_layer [1].png" type="image/png" data-filename="13_display_layer.png" style="--en-uploadstate:uploaded;"/><h2>6.2 编写管理层</h2><h3>6.2.1 display_device.c</h3><p style="text-align:start;">使用链表来管理底下各个显示设备，底层的显示设备要把自己注册进链表：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;"> * 函数名称： DisplayDeviceRegister
+ * 功能描述： 注册一个输入设备
+ * 输入参数： ptDisplayDevice-输入设备
+ * 输出参数： 无
+ * 返 回 值： 无
+ * 修改日期        版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/09/24	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+void DisplayDeviceRegister(PDisplayDevice ptDisplayDevice)
+{
+	ptDisplayDevice-&gt;pNext = g_ptDisplayDevices;
+	g_ptDisplayDevices = ptDisplayDevice;
+ }</div><p style="text-align:start;"><br/></p><p style="text-align:start;">我们还可以通过名字从链表中把设备取出来，__GetDisplayDevice函数前面有__前缀，表示这是内部函数：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： __GetDisplayDevice
+ * 功能描述： 获得显示设备
+ * 输入参数： name-显示设备的名称
+ * 输出参数： 无
+ * 返 回 值： 成功-PDisplayDevice, 失败-NULL
+ * 修改日期        版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/08	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+PDisplayDevice __GetDisplayDevice(char *name)
+{
+	PDisplayDevice pTmp = g_ptDisplayDevices;
+	while (pTmp)
+	{
+		if (strcmp(pTmp-&gt;name, name) == 0)
+			return pTmp;
+		else
+			pTmp = pTmp-&gt;pNext;
+	}
+	return NULL;
+}</div><p style="text-align:start;"><br/></p><h3>6.2.2 display_system.c</h3><div>程序中关于显示设备链表的注册，为了避免display_device.c和oled_device.c两个文件相互调用，这里创建display_system.c，显示设备对外的统一接口。</div><img src="【1】05设备子系统设计程序设计框架_files/Image [2].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;">这是显示设备对外的统一接口，提供了2个函数。</p><p style="text-align:start;">第一个函数是注册所有的显示设备：</p><ul><li><p>它调用OLED设备提供的AddDisplayDeviceOLED函数</p></li><li><p>如果还有其他显示设备，请在此函数中添加注册代码</p></li></ul><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： AddDisplayDevices
+ * 功能描述： 注册多个显示设备
+ * 输入参数： 无
+ * 输出参数： 无
+ * 返 回 值： 无
+ * 修改日期        版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/08	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+void AddDisplayDevices(void)
+{
+	AddDisplayDeviceOLED();
+}</div><p style="text-align:start;"><br/></p><p style="text-align:start;">第二个函数是根据名字获得显示设备：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： GetDisplayDevice
+ * 功能描述： 获得显示设备
+ * 输入参数： name-显示设备的名称
+ * 输出参数： 无
+ * 返 回 值： 成功-PDisplayDevice, 失败-NULL
+ * 修改日期        版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/08	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+PDisplayDevice GetDisplayDevice(char *name)
+{
+	return __GetDisplayDevice(name);
+}</div><p style="text-align:start;"><br/></p><h2>6.3 编写单元测试代码</h2><p style="text-align:start;">代码为smartdevice\unittest\display_test.c，函数如下：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">
+/**********************************************************************
+ * 函数名称： display_test
+ * 功能描述： 显示设备单元测试函数
+ * 输入参数： 无
+ * 输出参数： 无
+ * 返 回 值： 无
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/08	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+void display_test(void)
+{
+	PDisplayDevice ptDevice;
+	char *name = &quot;OLED&quot;;
+	int x, y;
+	
+	AddDisplayDevices();
+
+	ptDevice = GetDisplayDevice(name);
+
+	if (!ptDevice)
+	{
+		printf(&quot;Can not get DisplayDevice %s\r\n&quot;, name);
+		return;
+	}
+
+	/* 1. 初始化设备 */
+	ptDevice-&gt;Init(ptDevice);
+
+	/* 2. 清除屏幕 */
+	memset(ptDevice-&gt;FBBase, 0, ptDevice-&gt;iSize);
+
+	/* 3. 画线 */
+	y = ptDevice-&gt;iYres / 2;
+	for (x = 0; x &lt; ptDevice-&gt;iXres; x++)
+		ptDevice-&gt;SetPixel(ptDevice, x, y, 1);
+
+	x = ptDevice-&gt;iXres / 2;
+	for (y = 0; y &lt; ptDevice-&gt;iYres; y++)
+		ptDevice-&gt;SetPixel(ptDevice, x, y, 1);
+
+
+	/* 4. Flush */
+	ptDevice-&gt;Flush(ptDevice);
+}</div><img src="【1】05设备子系统设计程序设计框架_files/Image [3].png" type="image/png" data-filename="Image.png" style="--en-uploadstate:uploaded;"/><h2>6.4 上机测试</h2><p style="text-align:start;">测试结果为：在OLED屏幕上画出一个十字。</p><p style="text-align:start;"><br/></p><p style="text-align:start;"><br/></p><h1>7.设备系统_风扇设备源码讲解</h1><p style="text-align:start;">本节源码：在GIT仓库中</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">rtos_doc_source\RTOS培训资料\
+	01_项目1_基于HAL库实现智能家居\
+		05_项目1_基于HAL库的智能家居\1_项目源码\10_12_device_fan</div><p style="text-align:start;"><br/></p><h2>7.1 硬件操作原理</h2><p style="text-align:start;">如下图连接风扇：</p><img src="【1】05设备子系统设计程序设计框架_files/31_place_motor.png" type="image/png" data-filename="31_place_motor.png" style="--en-uploadstate:uploaded;"/><p style="text-align:start;"><br/></p><p style="text-align:start;">风扇电路图我们也没有，但是接口很简单：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">D:\abc\rtos_doc_source\RTOS培训资料\
+	00_基础资源资料\1_STM32F103\3_硬件资料\2_扩展板原理图\
+		F103_Extend_V2.pdf</div><p style="text-align:start;"><br/></p><img src="【1】05设备子系统设计程序设计框架_files/30_motor_interface.png" type="image/png" data-filename="30_motor_interface.png" style="--en-uploadstate:uploaded;"/><table style="--en-fitwindow:false;border-left:1px solid #d9d9d9;border-top:1px solid #d9d9d9;border-collapse:collapse;width:570px;" width="570px"><colgroup><col style="width: 190px;"></col><col style="width: 190px;"></col><col style="width: 190px;"></col></colgroup><tbody><tr><th style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div><br/></div></th><th style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div><span style="font-weight: bold;">INA</span></div></th><th style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div><span style="font-weight: bold;">INB</span></div></th></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>顺时针旋转</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>0</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>1</div></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>逆时针旋转</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>1</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>0</div></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>停止</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>0</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>0</div></td></tr><tr><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>停止</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>1</div></td><td style="--en-typeInfo:{&quot;type&quot;:&quot;text&quot;,&quot;data&quot;:{}};border-right:1px solid #d9d9d9;border-bottom:1px solid #d9d9d9;padding:10px;"><div>1</div></td></tr></tbody></table><p style="text-align:start;"><br/></p><h2>7.2 代码讲解</h2><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">从上到下涉及的文件:
+		smartdevice\unittest\fan_test.c
+		smartdevice\device\fan_device.c
+		smartdevice\kal\kal_fan_device.c
+		smartdevice\cal\cal_fan_device.c
+		ModuleDrivers\driver_fan.c</div><p style="text-align:start;"><br/></p><h2>7.3 单元测试</h2><p style="text-align:start;">smartdevice\unittest\fan_test.c：</p><div style="--en-codeblock:true;--en-codeblockLanguage:clike;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">/**********************************************************************
+ * 函数名称： fan_test
+ * 功能描述： 设备系统风扇设备单元测试函数
+ * 输入参数： 无
+ * 输出参数： 无
+ * 返 回 值： 无
+ * 修改日期       版本号     修改人	      修改内容
+ * -----------------------------------------------
+ * 2021/10/18	     V1.0	  韦东山	      创建
+ ***********************************************************************/
+void fan_test(void)
+{
+	PFANDevice ptDev = GetFANDevice();
+
+	/* 初始化设备 */
+	ptDev-&gt;Init(ptDev);
+
+	while (1)
+	{
+		/* 顺时针旋转 */
+		ptDev-&gt;SetSpeed(ptDev, 1);
+		KAL_Delay(2000);
+		
+		/* 停止 */
+		ptDev-&gt;SetSpeed(ptDev, 0);
+		KAL_Delay(2000);
+
+		/* 逆时针旋转 */
+		ptDev-&gt;SetSpeed(ptDev, -1);
+		KAL_Delay(2000);		
+		
+		/* 停止 */
+		ptDev-&gt;SetSpeed(ptDev, 0);
+		KAL_Delay(2000);
+	}
+}</div><div><br/></div><p><br/></p></span>
+</div></body></html> 
